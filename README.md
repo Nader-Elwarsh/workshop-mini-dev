@@ -1,0 +1,25 @@
+# الورشة الفنية — V11.1
+
+نسخة V11 المصغرة مع إضافات PWA فقط.
+
+## الأقسام
+- العملاء
+- الأجهزة
+- أوامر الشغل
+- المخزن
+
+## V11.1
+- Manifest للتثبيت كتطبيق على الهاتف.
+- Service Worker للتشغيل Offline بعد أول تحميل ناجح.
+- Cache لملفات النظام الأساسية.
+- تحديث ملفات الواجهة عند توفر الإنترنت بدون لمس بيانات localStorage.
+- زر تثبيت التطبيق يظهر عندما يسمح المتصفح بذلك.
+
+## مهم
+بيانات النظام محفوظة في localStorage على نفس المتصفح/الجهاز. النسخة الحالية ليست مزامنة سحابية بين الأجهزة.
+
+
+V11.2: updated PWA/app icons using the workshop logo; application logic unchanged.
+
+
+V11.2.3: online-first static asset refresh with offline fallback and new cache version.
