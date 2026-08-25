@@ -1,4 +1,4 @@
-const CACHE_NAME = "workshop-v11-8-1-auto-update-pwa";
+const CACHE_NAME = "workshop-v11-9-0-reports-print-share";
 importScripts("./notif-shared.js");
 const CORE_FILES = [
   "./",
@@ -14,8 +14,12 @@ const CORE_FILES = [
   "./settings.html",
   "./treasury.html",
   "./tasks.html",
+  "./reports.html",
   "./style.css",
   "./app.js",
+  "./reports.js",
+  "./print-share.js",
+  "./print-share.css",
   "./manifest.json",
   "./icon-192-v11-2-7.png",
   "./icon-512-v11-2-7.png",
