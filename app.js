@@ -471,23 +471,40 @@ function deleteAllRequests(){let r=arr(K.r);if(!r.length)return alert("لا تو
 function resolveRequestAddress(r){let c=arr(K.c).find(x=>x.id===r.customerId);if(!c)return{};let list=addresses(c);return list.find(a=>a.key===r.addressKey)||list[0]||{}}
 
 // خط سير اليوم: تجميع أوامر الشغل اللي لها موعد زيارة (اليوم/المتأخرة) حسب المركز والقرية.
+function toggleVisited(i){let a=arr(K.r),r=a.find(x=>x.id===i);if(!r)return;let today=dayKeyLocal(new Date());if(r.visitedAt&&dayKeyLocal(r.visitedAt)===today)r.visitedAt=null;else r.visitedAt=new Date().toISOString();put(K.r,a);renderRoute()}
 function renderRoute(){
   let el=document.getElementById("routeList");if(!el)return;
   let today=dayKeyLocal(new Date());
   let cf=document.getElementById("routeCenterFilter")?.value||"";
   let mode=document.getElementById("routeMode")?.value||"today";
-  let list=arr(K.r).filter(x=>x.status!=="مكتمل"&&x.status!=="ملغي"&&x.visit).filter(x=>{
+  let summaryEl=document.getElementById("routeSummary");
+  if(summaryEl){
+    let scheduledToday=arr(K.r).filter(x=>x.visit&&dayKeyLocal(x.visit)===today);
+    let closedToday=scheduledToday.filter(x=>x.closed);
+    let visitedNotClosed=scheduledToday.filter(x=>!x.closed&&x.status!=="ملغي"&&x.visitedAt&&dayKeyLocal(x.visitedAt)===today);
+    let notVisited=scheduledToday.filter(x=>!x.closed&&x.status!=="ملغي"&&!(x.visitedAt&&dayKeyLocal(x.visitedAt)===today));
+    let collectedToday=arr(K.r).filter(x=>x.paidAt&&dayKeyLocal(x.paidAt)===today).reduce((a,x)=>a+Math.max(0,(+x.total||0)-(+x.deposit||0)),0);
+    summaryEl.innerHTML=`<div class="route-summary"><div class="stat"><b>${scheduledToday.length}</b><span>📅 مجدول النهاردة</span></div><div class="stat"><b>${closedToday.length}</b><span>✅ اتقفل واتحصّل</span></div><div class="stat"><b>${visitedNotClosed.length}</b><span>🚶 اتزار ولسه شغال</span></div><div class="stat"><b>${notVisited.length}</b><span>⏳ لسه محدش راح</span></div><div class="stat"><b>${collectedToday.toFixed(2)} ج</b><span>💰 المحصّل النهاردة</span></div></div>`;
+  }
+  let list=arr(K.r).filter(x=>x.visit).filter(x=>{
     let k=dayKeyLocal(x.visit);
+    let pending=x.status!=="مكتمل"&&x.status!=="ملغي"&&!x.closed;
     if(mode==="today")return k===today;
-    if(mode==="overdue")return k<today;
-    return k<=today;
+    if(mode==="overdue")return k<today&&pending;
+    return k===today||(k<today&&pending);
   }).map(x=>({...x,_c:arr(K.c).find(z=>z.id===x.customerId)||{},_addr:resolveRequestAddress(x)}));
   if(cf)list=list.filter(x=>x._addr.center===cf);
   list.sort((a,b)=>(a._addr.center||"").localeCompare(b._addr.center||"","ar")||(a._addr.village||"").localeCompare(b._addr.village||"","ar")||new Date(a.visit)-new Date(b.visit));
   if(!list.length){el.innerHTML='<div class="item">لا يوجد مواعيد ضمن الاختيار الحالي.</div>';return}
   let groups={};
   list.forEach(x=>{let k=x._addr.center||"بدون مركز";(groups[k]=groups[k]||[]).push(x)});
-  el.innerHTML=Object.keys(groups).map(center=>`<h3 class="route-group-title">🗺️ ${esc(center)} <span class="badge">${groups[center].length}</span></h3>`+groups[center].map(x=>`<div class="item record-card"><div class="item-head"><a href="request.html?id=${x.id}"><b>🛠️ ${esc(x.no)}</b></a>${dayKeyLocal(x.visit)<today?'<span class="badge">⚠️ متأخر</span>':""}</div><div>👤 <a href="customer.html?id=${x.customerId}">${esc(x._c.name||"")}</a></div><div>${contactLinksHtml(x._c.phone)}</div><div>📍 ${esc(addressText(x._addr))}</div><div>🔧 ${esc(deviceName(x.deviceId))} — ${esc(x.fault||"")}</div><div>⏰ ${x.visit?new Date(x.visit).toLocaleString("ar-EG",{day:"2-digit",month:"2-digit",hour:"2-digit",minute:"2-digit"}):""}</div></div>`).join("")).join("");
+  el.innerHTML=Object.keys(groups).map(center=>`<h3 class="route-group-title">🗺️ ${esc(center)} <span class="badge">${groups[center].length}</span></h3>`+groups[center].map(x=>{
+    let visitedToday=!!(x.visitedAt&&dayKeyLocal(x.visitedAt)===today);
+    let stateBadge=x.closed?'<span class="badge route-badge-done">✅ اتقفل</span>':x.status==="ملغي"?'<span class="badge">🚫 ملغي</span>':visitedToday?'<span class="badge route-badge-visited">🚶 اتزار</span>':'<span class="badge route-badge-pending">⏳ لسه</span>';
+    let lateBadge=dayKeyLocal(x.visit)<today&&!x.closed&&x.status!=="ملغي"?'<span class="badge">⚠️ متأخر</span>':"";
+    let toggleBtn=(!x.closed&&x.status!=="ملغي")?`<button type="button" class="secondary mini-action" onclick="toggleVisited('${x.id}')">${visitedToday?"↩️ إلغاء تسجيل الزيارة":"✅ سجّل إني زرته"}</button>`:"";
+    return `<div class="item record-card"><div class="item-head"><a href="request.html?id=${x.id}"><b>🛠️ ${esc(x.no)}</b></a>${stateBadge}${lateBadge}</div><div>👤 <a href="customer.html?id=${x.customerId}">${esc(x._c.name||"")}</a></div><div>${contactLinksHtml(x._c.phone)}</div><div>📍 ${esc(addressText(x._addr))}</div><div>🔧 ${esc(deviceName(x.deviceId))} — ${esc(x.fault||"")}</div><div>⏰ ${x.visit?new Date(x.visit).toLocaleString("ar-EG",{day:"2-digit",month:"2-digit",hour:"2-digit",minute:"2-digit"}):""}</div>${x.closed?`<div>💰 المحصّل: ${Math.max(0,(+x.total||0)-(+x.deposit||0)).toFixed(2)} ج</div>`:""}${toggleBtn?`<div class="actions">${toggleBtn}</div>`:""}</div>`;
+  }).join("")).join("");
 }
 function initRoutePage(){
   let cfEl=document.getElementById("routeCenterFilter");if(!cfEl)return;

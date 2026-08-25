@@ -2,6 +2,14 @@
 .card-accent-cyan i{background:linear-gradient(135deg,#0891b2,#0e7490);color:#fff}
 .card-accent-red i{background:linear-gradient(135deg,#e11d48,#9f1239);color:#fff}
 .route-group-title{margin:16px 0 6px;font-size:15px;color:#17324d}
+.route-summary{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin:12px 0}
+.route-summary .stat{background:#f6f8fa;border-radius:10px;padding:10px;text-align:center}
+.route-summary .stat b{display:block;font-size:16px}
+.route-summary .stat span{font-size:11px;color:#687583}
+.route-badge-done{background:#e3f6ea;color:#18794e}
+.route-badge-visited{background:#e7f0ff;color:#1f4fa3}
+.route-badge-pending{background:#fff3cd;color:#8a6d1f}
+@media(max-width:650px){.route-summary{grid-template-columns:repeat(2,1fr)}}
 .card-accent-gold i{background:linear-gradient(135deg,#e8a13a,#c77d0e);color:#fff}
 .treasury-balance{background:linear-gradient(135deg,#17324d,#0c1c2c);color:#fff;border-radius:14px;padding:18px;text-align:center;margin-bottom:14px}
 .treasury-balance span{display:block;font-size:13px;opacity:.8;margin-bottom:4px}
