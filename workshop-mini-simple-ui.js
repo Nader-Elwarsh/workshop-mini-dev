@@ -469,7 +469,7 @@
   function renderRouteSummary(all) {
     const future = all.filter(r => r.visit && !orderIsCompleted(r) && r.status !== "ملغي" && !orderIsOverdue(r))
       .sort((a,b) => new Date(a.visit) - new Date(b.visit));
-    if (!future.length) return `<div class="simple-empty">📅 لا توجد مواعيد مجدولة قادمة.</div>`;
+    if (!future.length) return `<div class="rp-wrap"><div class="rp-empty">📅 لا توجد مواعيد مجدولة قادمة.</div></div>`;
 
     const groups = {};
     future.forEach(r => {
@@ -483,19 +483,19 @@
       return Object.entries(byCenter).map(([center,cr]) => {
         const byVillage = {};
         cr.forEach(r => { const loc = locationForOrder(r); (byVillage[loc.village] ||= []).push(r); });
-        return `<div class="route-center"><b>📍 ${esc2(center)}</b>
+        return `<div class="rp-center"><b>📍 ${esc2(center)}</b>
           ${Object.entries(byVillage).map(([village,vr]) => `
-            <div class="route-village">
-              <div class="route-village-head"><span>${esc2(village)}</span><strong>${vr.length}</strong></div>
-              ${vr.map(r=>`<a href="request.html?id=${r.id}" class="route-order-link">${esc2(r.no)} — ${esc2(customerName(r.customerId))}</a>`).join("")}
+            <div class="rp-village">
+              <div class="rp-village-head"><span>${esc2(village)}</span><strong>${vr.length}</strong></div>
+              ${vr.map(r=>`<a href="request.html?id=${r.id}" class="rp-order-link">${esc2(r.no)} — ${esc2(customerName(r.customerId))}</a>`).join("")}
             </div>`).join("")}
         </div>`;
       }).join("");
     };
 
     const dates = Object.keys(groups).sort().slice(0, 4);
-    return `<div class="route-summary">
-      <div class="simple-summary-title"><b>📅 خط السير القادم</b><span>${future.length} موعد</span></div>
+    return `<div class="rp-wrap">
+      <div class="rp-title"><b>📅 خط السير القادم</b><span>${future.length} موعد</span></div>
       ${dates.map(dk => {
         const dayOrders = groups[dk];
         const cityOrders = [], villageOrders = [];
@@ -504,10 +504,10 @@
           (villageGroupOf(loc.center, loc.village) === "city" ? cityOrders : villageOrders).push(r);
         });
         const d = new Date(dk + "T00:00:00");
-        return `<div class="route-day">
-          <div class="route-day-title"><b>${d.toLocaleDateString("ar-EG",{weekday:"long",day:"2-digit",month:"2-digit"})}</b><span>${dayOrders.length} أمر</span></div>
-          ${cityOrders.length ? `<div class="route-group"><div class="route-group-title">🏙️ داخل المركز <span>${cityOrders.length}</span></div>${centerVillageBlock(cityOrders)}</div>` : ""}
-          ${villageOrders.length ? `<div class="route-group"><div class="route-group-title">🌾 القرى <span>${villageOrders.length}</span></div>${centerVillageBlock(villageOrders)}</div>` : ""}
+        return `<div class="rp-day">
+          <div class="rp-day-title"><b>${d.toLocaleDateString("ar-EG",{weekday:"long",day:"2-digit",month:"2-digit"})}</b><span>${dayOrders.length} أمر</span></div>
+          ${cityOrders.length ? `<div class="rp-group"><div class="rp-group-title">🏙️ داخل المركز <span>${cityOrders.length}</span></div>${centerVillageBlock(cityOrders)}</div>` : ""}
+          ${villageOrders.length ? `<div class="rp-group"><div class="rp-group-title">🌾 القرى <span>${villageOrders.length}</span></div>${centerVillageBlock(villageOrders)}</div>` : ""}
         </div>`;
       }).join("")}
     </div>`;

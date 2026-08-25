@@ -152,20 +152,29 @@ header{display:flex;align-items:center;justify-content:space-between;gap:12px}
 .simple-stock-alert:active{opacity:.8}
 .simple-order-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
 .simple-order-grid .simple-tile{min-height:86px}
-.route-summary{margin-top:12px;background:#fff;border:1px solid #e2e6eb;border-radius:12px;padding:10px}
-.route-day{border-top:1px solid #edf0f2;padding-top:8px;margin-top:8px}
-.route-day-title{display:flex;justify-content:space-between;gap:8px;font-size:13px}
-.route-day-title span{color:#687583;font-size:11px}
-.route-center{margin-top:7px;background:#f7f9fb;border-radius:9px;padding:8px}
-.route-group{margin-top:6px}
-.route-group-title{display:flex;justify-content:space-between;gap:8px;font-size:12px;font-weight:bold;color:#3a4a58;padding:2px 2px 4px}
-.route-group-title span{color:#687583;font-weight:normal}
-.route-center>b{font-size:12px}
-.route-village{margin-top:5px;padding-top:5px;border-top:1px solid #e9edf0}
-.route-village-head{display:flex;justify-content:space-between;gap:8px;align-items:center}
-.route-village-head span{font-size:12px;color:#3a4a58}
-.route-village-head strong{font-size:12px}
-.route-order-link{display:block;font-weight:bold;color:#17324d;text-decoration:none;font-size:12px;padding:3px 0}
+/* خط السير القادم — بطاقة داكنة مستقلة (rp- prefix خاص بيها لوحدها عشان متتعارضش مع route-summary/route-group-title بتوع صفحة route.html) */
+.rp-wrap{margin-top:14px;background:#17181b;color:#f2f3f5;border-radius:18px;padding:14px 16px 18px;box-shadow:0 6px 20px #0000003d}
+.rp-title{display:flex;align-items:center;justify-content:space-between;gap:10px;padding-bottom:12px;margin-bottom:10px;border-bottom:1px solid #2c2d31;font-size:16px}
+.rp-title b{font-weight:bold}
+.rp-title span{font-size:13px;color:#9aa0a8}
+.rp-empty{padding:16px;text-align:center;color:#9aa0a8;font-size:13px}
+.rp-day{border-top:1px solid #2c2d31;padding-top:10px;margin-top:10px}
+.rp-day:first-of-type{border-top:0;padding-top:0;margin-top:0}
+.rp-day-title{display:flex;justify-content:space-between;align-items:baseline;gap:8px;font-size:15px}
+.rp-day-title b{font-weight:bold}
+.rp-day-title span{color:#9aa0a8;font-size:13px}
+.rp-group{margin-top:10px}
+.rp-group-title{display:flex;flex-direction:row-reverse;justify-content:flex-end;align-items:center;gap:6px;font-size:14px;font-weight:bold;color:#e7e9ec;padding:2px 2px 6px}
+.rp-group-title span{color:#9aa0a8;font-weight:normal;margin-inline-start:auto}
+.rp-center{margin-top:8px}
+.rp-center>b{display:block;font-size:15px;font-weight:bold;color:#f2f3f5;padding:4px 0}
+.rp-village{margin-top:4px;padding:6px 0}
+.rp-village-head{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.rp-village-head span{font-size:13px;color:#e7e9ec}
+.rp-village-head strong{font-size:13px;font-weight:normal;color:#9aa0a8}
+.rp-order-link{display:block;font-weight:bold;color:#4d9fff;text-decoration:none;font-size:13px;padding:4px 0 2px}
+.rp-order-link:active{opacity:.7}
+@media(max-width:650px){.rp-wrap{padding:12px 14px 16px}}
 .simple-list-head{display:flex;align-items:center;justify-content:space-between;gap:8px;margin:12px 0 8px}
 .simple-list-head>div{display:grid;gap:2px}
 .simple-list-head small{font-size:11px;color:#687583}
