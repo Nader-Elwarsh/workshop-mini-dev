@@ -200,7 +200,11 @@ header{display:flex;align-items:center;justify-content:space-between;gap:12px}
 .ext-cost-note{display:block;color:#8a6d1f;font-size:11px;margin-top:2px}
 .tel-link{display:inline-flex;align-items:center;gap:4px;color:#18794e;font-weight:bold;text-decoration:none;direction:ltr;justify-content:flex-end}
 .tel-link:hover{text-decoration:underline}
-@media print{.tel-link{color:#111!important}}
+.wa-link{display:inline-flex;align-items:center;gap:4px;color:#1da851;font-weight:bold;text-decoration:none;margin-inline-start:6px}
+.wa-link:hover{text-decoration:underline}
+@media print{.tel-link,.wa-link{color:#111!important}}
+.backup-import-btn{display:inline-flex;align-items:center;cursor:pointer}
+.backup-import-btn input{display:none}
 .request-parts .hint{margin-top:6px}
 
 /* ===== صفحة التقارير والتحليلات ===== */
