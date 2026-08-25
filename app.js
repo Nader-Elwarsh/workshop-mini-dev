@@ -4,7 +4,7 @@ function localDateKey(date){return `${date.getFullYear()}-${String(date.getMonth
 function orderNo(date=new Date()){let y=String(date.getFullYear()).slice(-2),m=date.getMonth()+1,d=date.getDate(),prefix=`W${y}-${m}-${d}-`,ymd=localDateKey(date);let n=arr(K.r).filter(x=>x.createdAt&&localDateKey(new Date(x.createdAt))===ymd).length+1;while(arr(K.r).some(x=>x.no===prefix+n))n++;return prefix+n}
 function normalizeOrderNumbers(){let rs=arr(K.r),used=new Set(),groups={};rs.forEach(r=>{let dt=r.createdAt?new Date(r.createdAt):new Date(),ymd=localDateKey(dt);(groups[ymd]??=[]).push(r)});Object.entries(groups).forEach(([ymd,list])=>{let [yy,mm,dd]=ymd.split("-").map(Number),prefix=`W${String(yy).slice(-2)}-${mm}-${dd}-`;list.forEach((r,i)=>{let n=prefix+(i+1);while(used.has(n))n=prefix+(++i+1);r.no=n;used.add(n)})});put(K.r,rs)}
 
-const K={c:"wf_c",d:"wf_d",r:"wf_r",p:"wf_p",s:"wf_s",m:"wf_m",e:"wf_e",tr:"wf_tr"};
+const K={c:"wf_c",d:"wf_d",r:"wf_r",p:"wf_p",s:"wf_s",m:"wf_m",e:"wf_e",tr:"wf_tr",tasks:"wf_tasks"};
 const def={centers:["مطاي","بني مزار"],villages:{مطاي:["مطاي البلد","أبو عزيز","بردنوها","منبال","أبوان","إبوان","حلوة","سيلة الشرقية","سيلة الغربية","عزبة بطرس","عزبة أبو شحاته"],"بني مزار":[]},types:{غسالات:["هاف أوتوماتيك","فوق أوتوماتيك","أمامي أوتوماتيك"],ثلاجات:["عادية","نوفروست","ديب فريزر"],تكييفات:["سبليت","شباك"],سخانات:["كهرباء","غاز"],كولديرات:["كولدير"],أجهزة_أخرى:["عام"]},brands:["Fresh","Unionaire","Tornado","Beko","LG","Samsung","Sharp","Ariston","Zanussi","Whirlpool","Indesit","White Point","Kiriazi","Ideal","Fagor","Daewoo","Hitachi","Panasonic","Carrier","Midea","Haier","Gree","TCL","فريش","توشيبا العربى","كريازى"],partCats:["ثلاجات وفريزرات","غسالات","تكييف","سخانات","كهرباء وإلكترونيات","مواتير","كمبروسرات","أخرى"]};
 function get(k,f=[]){try{let x=JSON.parse(localStorage.getItem(k));return x??f}catch{return f}} function put(k,v){localStorage.setItem(k,JSON.stringify(v))}
 function settings(){let s=get(K.s,null);if(!s)s={};let base=JSON.parse(JSON.stringify(def));for(const k of Object.keys(base)){if(Array.isArray(base[k]))s[k]=Array.isArray(s[k])?s[k]:base[k];else if(base[k]&&typeof base[k]==="object")s[k]=s[k]&&typeof s[k]==="object"?s[k]:base[k]}s.orderStatuses=s.orderStatuses||["جديد","تم التواصل","مجدول","جاري الفحص","انتظار موافقة العميل","تحت الإصلاح","مكتمل","ملغي"];s.priorities=s.priorities||["عادية","عاجلة","أولوية عالية"];s.executionPlaces=s.executionPlaces||["عند العميل","الورشة"];s.workshopStatuses=s.workshopStatuses||["غير مطلوب","مطلوب السحب","تم السحب","استلام الورشة","تحت الإصلاح","جاهز للتسليم","تم التسليم"];s.paymentStatuses=s.paymentStatuses||["غير مكتمل","تم الدفع بالكامل"];s.units=s.units||["قطعة","متر","كيلو","لتر","مجموعة"];s.addressTypes=s.addressTypes||["العنوان الأساسي","العنوان الإضافي"];s.orderTags=s.orderTags||[];s.villageGroups=s.villageGroups||{};s.expenseCategories=s.expenseCategories||["وقود ومواصلات","صيانة عدة وأدوات","إيجار وفواتير","أخرى"];put(K.s,s);return s}
@@ -16,95 +16,219 @@ function toggleQuickAdd(boxId){let box=document.getElementById(boxId);if(!box)re
 function closeQuickAdd(boxId){let box=document.getElementById(boxId);if(!box)return;box.classList.add("hidden");let btn=document.querySelector(`[data-opens="${boxId}"]`);if(btn){btn.textContent=QUICK_ADD_LABELS[boxId]||"➕ إضافة";btn.classList.remove("quick-add-open")}}
 
 /* ---------------------------------------------------------------------
-   💵 الخزنة: رصيد حقيقي بيتحدث تلقائيًا من تحصيل الأوامر والمصاريف،
-   وبرضه ممكن تضيف/تسحب/تعدّل يدوي. أي حركة مرتبطة (refKey) لو المستخدم
-   عدّلها يدويًا بتتقفل (manualOverride) وميبقاش النظام يجاوز عليها تاني.
+   💵 الخزنة المستقلة:
+   الخزنة هنا = درج نقدي مستقل فقط.
+   لا تُضاف تحصيلات أوامر الشغل ولا تُخصم مصاريف التشغيل من رصيدها تلقائيًا.
+   يمكن عرض ملخص التشغيل للمتابعة فقط، لكنه لا يدخل في رصيد الخزنة.
 --------------------------------------------------------------------- */
 function treasuryEntries(){return arr(K.tr).filter(x=>!x.deleted)}
 function treasuryBalance(){return treasuryEntries().reduce((a,x)=>a+(x.type==="in"?(+x.amount||0):-(+x.amount||0)),0)}
-function upsertTreasuryEntry(refKey,data){
-  let a=arr(K.tr),existing=a.find(x=>x.refKey===refKey);
-  if(existing){
-    if(existing.manualOverride)return;
-    if(data===null){put(K.tr,a.filter(x=>x.refKey!==refKey));return}
-    Object.assign(existing,data);put(K.tr,a);
-  }else{
-    if(data===null)return;
-    a.push({id:id(),refKey,manualOverride:false,deleted:false,createdAt:new Date().toISOString(),...data});put(K.tr,a);
-  }
-}
-function removeTreasuryEntry(refKey){let a=arr(K.tr),existing=a.find(x=>x.refKey===refKey);if(existing&&existing.manualOverride)return;put(K.tr,a.filter(x=>x.refKey!==refKey))}
-function syncTreasuryForOrderDeposit(order){
-  let refKey="order-deposit-"+order.id;
-  if((+order.deposit||0)>0)upsertTreasuryEntry(refKey,{type:"in",amount:+order.deposit,date:(order.createdAt||new Date().toISOString()).slice(0,10),reason:`عربون - أمر ${order.no||""}`,source:"order",sourceId:order.id});
-  else upsertTreasuryEntry(refKey,null);
-}
-function syncTreasuryForOrderClose(order,collected){
-  if(collected<=0)return;
-  upsertTreasuryEntry("order-close-"+order.id,{type:"in",amount:collected,date:new Date().toISOString().slice(0,10),reason:`تحصيل نهائي - أمر ${order.no||""}`,source:"order",sourceId:order.id});
-}
-function syncTreasuryForExpense(e){upsertTreasuryEntry("expense-"+e.id,{type:"out",amount:+e.amount||0,date:e.date,reason:`مصروف - ${e.category}${e.note?" ("+e.note+")":""}`,source:"expense",sourceId:e.id})}
+function upsertTreasuryEntry(refKey,data){return null}
+function removeTreasuryEntry(refKey){return false}
+function syncTreasuryForOrderDeposit(order){return null}
+function syncTreasuryForOrderClose(order,collected){return null}
+function syncTreasuryForExpense(e){return null}
 function addTreasuryManual(type){
-  let amountEl=document.getElementById("trAmount"),reasonEl=document.getElementById("trReason"),dateEl=document.getElementById("trDate");
-  let amount=+amountEl.value||0,reason=(reasonEl.value||"").trim(),date=dateEl.value||new Date().toISOString().slice(0,10);
+  let amountEl=document.getElementById("trAmount"),reasonEl=document.getElementById("trReason"),
+      dateEl=document.getElementById("trDate"),timeEl=document.getElementById("trTime"),
+      personEl=document.getElementById("trPerson"),placeEl=document.getElementById("trPlace"),
+      categoryEl=document.getElementById("trCategory"),noteEl=document.getElementById("trNote");
+  let amount=+amountEl.value||0,reason=(reasonEl.value||"").trim(),
+      date=dateEl.value||localDateKey(new Date()),time=timeEl.value||new Date().toTimeString().slice(0,5);
   if(amount<=0)return alert("أدخل مبلغ صحيح.");
   if(!reason)return alert("اكتب سبب الحركة.");
-  let a=arr(K.tr);a.push({id:id(),refKey:null,manualOverride:true,deleted:false,type,amount,date,reason,source:"manual",createdAt:new Date().toISOString()});put(K.tr,a);
-  amountEl.value="";reasonEl.value="";renderTreasury();
+  let entry={
+    id:id(),refKey:null,manualOverride:true,deleted:false,type,amount,date,time,
+    reason,counterparty:(personEl?.value||"").trim(),place:(placeEl?.value||"").trim(),
+    category:categoryEl?.value||"أخرى",note:(noteEl?.value||"").trim(),
+    source:"cash-drawer",createdAt:new Date().toISOString()
+  };
+  put(K.tr,arr(K.tr).concat(entry));renderTreasury();
 }
 function saveOpeningBalance(){
-  let el=document.getElementById("trOpening"),amount=Math.abs(+el.value||0);
-  let a=arr(K.tr),existing=a.find(x=>x.refKey==="opening-balance");
-  if(existing){existing.amount=amount;existing.deleted=false}
-  else a.push({id:id(),refKey:"opening-balance",manualOverride:true,deleted:false,type:"in",amount,date:new Date().toISOString().slice(0,10),reason:"رصيد افتتاحي",source:"opening",createdAt:new Date().toISOString()});
+  let el=document.getElementById("trOpening"),amount=Math.abs(+el.value||0),
+      dateEl=document.getElementById("trOpeningDate"),date=dateEl?.value||localDateKey(new Date());
+  let a=arr(K.tr),existing=a.find(x=>x.refKey==="opening-balance"&&!x.deleted);
+  if(existing){existing.amount=amount;existing.date=date;existing.type="in";existing.reason="رصيد افتتاحي";existing.source="cash-drawer"}
+  else a.push({id:id(),refKey:"opening-balance",manualOverride:true,deleted:false,type:"in",amount,date,time:"00:00",reason:"رصيد افتتاحي",category:"رصيد افتتاحي",source:"cash-drawer",createdAt:new Date().toISOString()});
   put(K.tr,a);renderTreasury();
 }
 function editTreasuryEntry(entryId){
   let a=arr(K.tr),e=a.find(x=>x.id===entryId);if(!e)return;
   let newAmount=prompt("المبلغ:",e.amount);if(newAmount===null)return;
   let newReason=prompt("سبب الحركة:",e.reason);if(newReason===null)return;
-  e.amount=Math.abs(+newAmount)||0;e.reason=(newReason||"").trim()||e.reason;e.manualOverride=true;
+  let newPerson=prompt("لمن / من؟:",e.counterparty||"");if(newPerson===null)return;
+  let newPlace=prompt("فين / المكان؟:",e.place||"");if(newPlace===null)return;
+  e.amount=Math.abs(+newAmount)||0;e.reason=(newReason||"").trim()||e.reason;
+  e.counterparty=(newPerson||"").trim();e.place=(newPlace||"").trim();e.manualOverride=true;
   put(K.tr,a);renderTreasury();
 }
 function deleteTreasuryEntry(entryId){
   if(!confirm("حذف هذه الحركة من كشف الخزنة؟"))return;
   let a=arr(K.tr),idx=a.findIndex(x=>x.id===entryId);if(idx<0)return;
-  if(a[idx].refKey){a[idx].deleted=true;a[idx].manualOverride=true}else a.splice(idx,1);
-  put(K.tr,a);renderTreasury();
+  if(a[idx].refKey==="opening-balance"){alert("رصيد الافتتاح يُعدل من قسم الرصيد الافتتاحي ولا يُحذف من هنا.");return}
+  a.splice(idx,1);put(K.tr,a);renderTreasury();
+}
+function operationalTreasurySummary(){
+  let deposits=arr(K.r).reduce((a,x)=>a+(+x.deposit||0),0);
+  let finalCollections=arr(K.r).filter(x=>x.closed||x.paid).reduce((a,x)=>a+Math.max(0,(+x.total||0)-(+x.deposit||0)),0);
+  let expenses=arr(K.e).reduce((a,x)=>a+(+x.amount||0),0);
+  return {deposits,finalCollections,orderCollections:deposits+finalCollections,expenses};
 }
 function renderTreasury(){
   let el=document.getElementById("treasuryPage");if(!el)return;
   let balance=treasuryBalance();
-  let list=treasuryEntries().sort((a,b)=>new Date(b.date)-new Date(a.date)||new Date(b.createdAt)-new Date(a.createdAt));
+  let list=treasuryEntries().sort((a,b)=>new Date((b.date||"")+"T"+(b.time||"00:00"))-new Date((a.date||"")+"T"+(a.time||"00:00"))||new Date(b.createdAt)-new Date(a.createdAt));
   let opening=arr(K.tr).find(x=>x.refKey==="opening-balance"&&!x.deleted);
+  let op=operationalTreasurySummary();
+  let today=localDateKey(new Date());
   el.innerHTML=`
-    <div class="treasury-balance ${balance<0?"negative":""}"><span>رصيد الخزنة الحالي</span><b>${balance.toFixed(2)} ج</b></div>
+    <div class="treasury-balance ${balance<0?"negative":""}">
+      <span>رصيد درج الخزنة الحالي</span><b>${balance.toFixed(2)} ج</b>
+    </div>
+    <div class="hint" style="margin:10px 0">🔒 هذا الرصيد مستقل تمامًا عن حسابات أوامر الشغل وقطع الغيار ومصاريف التشغيل. أي مبلغ هنا لا يتغير إلا بحركة خزنة يدوية أو الرصيد الافتتاحي.</div>
     <div class="treasury-actions">
       <div class="form-grid">
         <label>المبلغ<input id="trAmount" type="number" step="0.01" min="0" placeholder="0.00"></label>
-        <label>التاريخ<input id="trDate" type="date" value="${new Date().toISOString().slice(0,10)}"></label>
-        <label class="wide">سبب الحركة<input id="trReason" placeholder="مثال: سحب شخصي، شراء عدة..."></label>
+        <label>التاريخ<input id="trDate" type="date" value="${today}"></label>
+        <label>الوقت<input id="trTime" type="time" value="${new Date().toTimeString().slice(0,5)}"></label>
+        <label>النوع<select id="trCategory"><option>شخصي</option><option>تشغيل</option><option>سلفة</option><option>تحويل</option><option>أخرى</option></select></label>
+        <label>لمن / من؟<input id="trPerson" placeholder="مثال: أحمد، المورد، نفسي"></label>
+        <label>فين / المكان؟<input id="trPlace" placeholder="مثال: البيت، الورشة، البنك"></label>
+        <label class="wide">السبب<input id="trReason" placeholder="مثال: سحب شخصي، فلوس وصلت، دفعت لمحمد..."></label>
+        <label class="wide">تفاصيل إضافية<input id="trNote" placeholder="اختياري"></label>
       </div>
       <div class="actions">
-        <button type="button" class="primary" onclick="addTreasuryManual('in')">➕ إضافة مبلغ</button>
-        <button type="button" class="secondary danger-btn" onclick="addTreasuryManual('out')">➖ سحب مبلغ</button>
+        <button type="button" class="primary" onclick="addTreasuryManual('in')">➕ وارد</button>
+        <button type="button" class="secondary danger-btn" onclick="addTreasuryManual('out')">➖ صرف</button>
       </div>
     </div>
     <details class="expense-panel">
-      <summary>⚙️ الرصيد الافتتاحي${opening?` (${(+opening.amount||0).toFixed(2)} ج)`:""}</summary>
-      <div class="form-grid"><label class="wide">الرصيد الافتتاحي (فلوس كانت عندك قبل استخدام البرنامج)<input id="trOpening" type="number" step="0.01" min="0" value="${opening?opening.amount:0}"></label></div>
+      <summary>⚙️ الرصيد الافتتاحي${opening?` (${(+opening.amount||0).toFixed(2)} ج)`: ""}</summary>
+      <div class="form-grid">
+        <label class="wide">الرصيد الافتتاحي (المبلغ الموجود فعليًا في الدرج عند بداية استخدام الحساب)
+          <input id="trOpening" type="number" step="0.01" min="0" value="${opening?opening.amount:0}">
+        </label>
+        <label>تاريخ بداية الرصيد<input id="trOpeningDate" type="date" value="${opening?.date||today}"></label>
+      </div>
       <button type="button" class="secondary" onclick="saveOpeningBalance()">💾 حفظ الرصيد الافتتاحي</button>
     </details>
-    <h3 class="treasury-list-title">📋 كشف الخزنة</h3>
+    <details class="expense-panel">
+      <summary>📊 عرض حسابات التشغيل (للاطلاع فقط — لا تدخل في رصيد الخزنة)</summary>
+      <div class="profile-grid">
+        <div class="kv"><b>💵 عربونات أوامر الشغل</b>${op.deposits.toFixed(2)} ج</div>
+        <div class="kv"><b>💳 تحصيلات إغلاق الأوامر</b>${op.finalCollections.toFixed(2)} ج</div>
+        <div class="kv"><b>🛠️ إجمالي تحصيلات الأوامر</b>${op.orderCollections.toFixed(2)} ج</div>
+        <div class="kv"><b>🧯 مصاريف التشغيل</b>${op.expenses.toFixed(2)} ج</div>
+      </div>
+      <div class="hint">هذه الأرقام للعرض والمراجعة فقط. لا تُضاف ولا تُخصم من درج الخزنة.</div>
+    </details>
+    <h3 class="treasury-list-title">📋 كشف درج الخزنة</h3>
     ${list.length?list.map(x=>`<div class="treasury-row ${x.type}">
-        <div class="treasury-row-main">
-          <b>${esc(x.reason||"—")}</b>
-          <small>${new Date(x.date).toLocaleDateString("ar-EG")} • ${x.source==="order"?"🛠️ مرتبط بأمر شغل":x.source==="expense"?"🧯 مرتبط بمصروف":x.source==="opening"?"⚙️ رصيد افتتاحي":"✍️ يدوي"}${x.manualOverride&&x.source!=="manual"&&x.source!=="opening"?" • ✏️ معدَّل يدويًا":""}</small>
-        </div>
-        <div class="treasury-row-amount ${x.type}">${x.type==="in"?"+":"−"}${(+x.amount||0).toFixed(2)} ج</div>
-        <div class="treasury-row-actions"><button type="button" class="mini-action" onclick="editTreasuryEntry('${x.id}')">✏️</button><button type="button" class="mini-action" onclick="deleteTreasuryEntry('${x.id}')">🗑️</button></div>
-      </div>`).join(""):`<div class="hint">لا توجد حركات في الخزنة بعد.</div>`}
+      <div class="treasury-row-main">
+        <b>${esc(x.reason||"—")}</b>
+        <small>${esc(new Date((x.date||today)+"T"+(x.time||"00:00")).toLocaleString("ar-EG"))} • ${esc(x.category||"أخرى")}${x.counterparty?` • 👤 ${esc(x.counterparty)}`:""}${x.place?` • 📍 ${esc(x.place)}`:""}</small>
+        ${x.note?`<small>📝 ${esc(x.note)}</small>`:""}
+      </div>
+      <div class="treasury-row-amount ${x.type}">${x.type==="in"?"+":"−"}${(+x.amount||0).toFixed(2)} ج</div>
+      <div class="treasury-row-actions"><button type="button" class="mini-action" onclick="editTreasuryEntry('${x.id}')">✏️</button><button type="button" class="mini-action" onclick="deleteTreasuryEntry('${x.id}')">🗑️</button></div>
+    </div>`).join(""):`<div class="hint">لا توجد حركات في درج الخزنة بعد.</div>`}
   `;
+}
+
+/* ---------------------------------------------------------------------
+   📋 المهام والمتابعة: قسم مستقل عن الدورة الأساسية.
+--------------------------------------------------------------------- */
+function taskRows(){return arr(K.tasks).filter(x=>!x.deleted)}
+function taskDateTime(t){return `${t.date||""}${t.time?"T"+t.time:""}`}
+function taskPriorityClass(p){return p==="عاجلة"?"negative":p==="عالية"?"high":""}
+function saveTask(){
+  let title=(document.getElementById("taskTitle")?.value||"").trim();
+  if(!title)return alert("اكتب عنوان المهمة.");
+  let t={
+    id:id(),title,
+    note:(document.getElementById("taskNote")?.value||"").trim(),
+    date:document.getElementById("taskDate")?.value||localDateKey(new Date()),
+    time:document.getElementById("taskTime")?.value||"",
+    priority:document.getElementById("taskPriority")?.value||"عادية",
+    customerId:document.getElementById("taskCustomer")?.value||"",
+    requestId:document.getElementById("taskRequest")?.value||"",
+    completed:false,createdAt:new Date().toISOString()
+  };
+  put(K.tasks,taskRows().concat(t));clearTaskForm();renderTasks();
+}
+function clearTaskForm(){
+  ["taskTitle","taskNote","taskTime","taskCustomer","taskRequest"].forEach(idv=>{let e=document.getElementById(idv);if(e)e.value=""});
+  let d=document.getElementById("taskDate");if(d)d.value=localDateKey(new Date());
+  let p=document.getElementById("taskPriority");if(p)p.value="عادية";
+}
+function toggleTask(idv){
+  let a=arr(K.tasks),t=a.find(x=>x.id===idv);if(!t)return;t.completed=!t.completed;t.completedAt=t.completed?new Date().toISOString():"";put(K.tasks,a);renderTasks();
+}
+function deleteTask(idv){
+  let a=arr(K.tasks),t=a.find(x=>x.id===idv);if(!t)return;
+  if(!confirm(`حذف المهمة «${t.title||""}»؟`))return;
+  put(K.tasks,a.filter(x=>x.id!==idv));renderTasks();
+}
+function editTask(idv){
+  let a=arr(K.tasks),t=a.find(x=>x.id===idv);if(!t)return;
+  let title=prompt("عنوان المهمة:",t.title);if(title===null)return;
+  let note=prompt("التفاصيل:",t.note||"");if(note===null)return;
+  let date=prompt("التاريخ YYYY-MM-DD:",t.date||localDateKey(new Date()));if(date===null)return;
+  let time=prompt("الوقت HH:MM (اختياري):",t.time||"");if(time===null)return;
+  let priority=prompt("الأولوية (عادية / عالية / عاجلة):",t.priority||"عادية");if(priority===null)return;
+  t.title=title.trim()||t.title;t.note=note.trim();t.date=date.trim()||t.date;t.time=time.trim();t.priority=priority.trim()||t.priority;
+  put(K.tasks,a);renderTasks();
+}
+function renderTasks(){
+  let el=document.getElementById("taskList");if(!el)return;
+  let q=(document.getElementById("taskSearch")?.value||"").toLowerCase().trim(),
+      filter=document.getElementById("taskFilter")?.value||"open",
+      today=localDateKey(new Date());
+  let rows=taskRows().filter(t=>{
+    let text=(t.title+" "+t.note+" "+customerName(t.customerId)).toLowerCase();
+    if(q&&!text.includes(q))return false;
+    if(filter==="open"&&t.completed)return false;
+    if(filter==="done"&&!t.completed)return false;
+    if(filter==="today"&&t.date!==today)return false;
+    if(filter==="overdue"&&(t.completed||!t.date||t.date>=today))return false;
+    return true;
+  }).sort((a,b)=>Number(a.completed)-Number(b.completed)||String(a.date||"").localeCompare(String(b.date||""))||String(a.time||"").localeCompare(String(b.time||"")));
+  let open=taskRows().filter(x=>!x.completed).length,done=taskRows().filter(x=>x.completed).length;
+  let stats=document.getElementById("taskStats");if(stats)stats.innerHTML=`<div class="compact-stats"><div class="stat"><b>${open}</b><span>مفتوحة</span></div><div class="stat"><b>${done}</b><span>مكتملة</span></div><div class="stat"><b>${taskRows().filter(x=>!x.completed&&x.date===today).length}</b><span>مهام اليوم</span></div><div class="stat"><b>${taskRows().filter(x=>!x.completed&&x.date&&x.date<today).length}</b><span>متأخرة</span></div></div>`;
+  el.innerHTML=rows.length?rows.map(t=>{
+    let c=t.customerId?customerName(t.customerId):"";
+    let r=t.requestId?arr(K.r).find(x=>x.id===t.requestId):null;
+    return `<div class="item record-card ${t.completed?"task-done":""}">
+      <div class="card-side-actions">
+        <button class="primary small-btn" type="button" onclick="toggleTask('${t.id}')">${t.completed?"↩️ إعادة فتح":"✅ مكتملة"}</button>
+        <button class="secondary small-btn" type="button" onclick="editTask('${t.id}')">✏️ تعديل</button>
+        <button class="danger-btn small-btn" type="button" onclick="deleteTask('${t.id}')">🗑️ حذف</button>
+      </div>
+      <div class="record-main">
+        <div class="item-head"><b>${t.completed?"✅":"📋"} ${esc(t.title)}</b><span class="badge ${taskPriorityClass(t.priority)}">${esc(t.priority||"عادية")}</span></div>
+        <div>📅 ${esc(t.date||"بدون تاريخ")}${t.time?" • ⏰ "+esc(t.time):""}${t.date&&t.date<today&&!t.completed?" • ⚠️ متأخرة":""}</div>
+        ${c?`<div>👤 <a href="customer.html?id=${t.customerId}">${esc(c)}</a></div>`:""}
+        ${r?`<div>🛠️ <a href="request.html?id=${r.id}">${esc(r.no)}</a></div>`:""}
+        ${t.note?`<div>📝 ${esc(t.note)}</div>`:""}
+      </div>
+    </div>`;
+  }).join(""):'<div class="item">لا توجد مهام بهذا الفلتر.</div>';
+}
+function initTasks(){
+  if(!document.getElementById("taskList"))return;
+  let d=document.getElementById("taskDate");if(d&&!d.value)d.value=localDateKey(new Date());
+  let c=document.getElementById("taskCustomer"),r=document.getElementById("taskRequest");
+  if(c){fillCustomer(c);c.onchange=()=>{if(r)fillTaskRequests(r,c.value)}}
+  if(r)fillTaskRequests(r,c?.value||"");
+  document.getElementById("taskSearch")?.addEventListener("input",renderTasks);
+  document.getElementById("taskFilter")?.addEventListener("change",renderTasks);
+  renderTasks();
+}
+function fillTaskRequests(el,cid){
+  if(!el)return;
+  let rows=arr(K.r).filter(x=>!cid||x.customerId===cid);
+  el.innerHTML='<option value="">بدون ربط بأمر شغل</option>'+rows.map(x=>`<option value="${x.id}">${esc(x.no)} — ${esc(customerName(x.customerId))}</option>`).join("");
 }
 function customerName(i){return arr(K.c).find(x=>x.id===i)?.name||"—"} function deviceName(i){let d=arr(K.d).find(x=>x.id===i);return d?`${d.type} - ${d.brand}`:"—"}
 function addresses(c){let e=c.extraAddress||{};let hasExtra=!!(e.center||e.village||e.street||e.address);return [{key:"main",label:"العنوان الأساسي",...c.mainAddress},...(hasExtra?[{key:"extra",label:"العنوان الإضافي",...e}]:[])]}
@@ -338,7 +462,7 @@ function deleteAllDevices(){let d=arr(K.d);if(!d.length)return alert("لا تو�
 function deleteAllRequests(){let r=arr(K.r);if(!r.length)return alert("لا توجد أوامر شغل للحذف.");if(!confirm(`حذف جميع أوامر الشغل (${r.length}) وإرجاع قطع الغيار المصروفة للمخزن؟`))return;if(!confirm("تأكيد نهائي: لا يمكن التراجع عن الحذف."))return;let stock=arr(K.p);r.forEach(o=>(o.parts||[]).forEach(x=>{let p=stock.find(z=>z.id===x.partId);if(p)p.qty=(+p.qty||0)+(+x.qty||0)}));put(K.p,stock);put(K.r,[]);put(K.m,[]);renderRequests?.();renderDash?.();monthReport?.();alert("تم حذف جميع أوامر الشغل وإرجاع القطع للمخزن.")}
 function deleteAllOperationalData(){if(!confirm("سيتم حذف العملاء والأجهزة وأوامر الشغل وقطع الغيار وحركات المخزن والمصاريف وحركات الخزنة. الإعدادات والمراكز والقرى لن تتأثر. هل تريد المتابعة؟"))return;if(!confirm("تأكيد نهائي جدًا: حذف كل البيانات التشغيلية؟"))return;[K.c,K.d,K.r,K.p,K.m,K.e,K.tr].forEach(k=>put(k,[]));alert("تم حذف كل البيانات التشغيلية. سيتم تحديث الصفحة.");location.reload()}
 
-document.addEventListener("DOMContentLoaded",()=>{settings();normalizeOrderNumbers();renderDash();monthReport();document.getElementById("reportMonth")?.addEventListener("change",financeReport);document.getElementById("reportWeek")?.addEventListener("change",financeReport);initCustomers();customerProfile();initDevices();deviceProfile();initRequests();requestProfile();initParts();partProfile();settingsPage();renderTreasury()})
+document.addEventListener("DOMContentLoaded",()=>{settings();normalizeOrderNumbers();renderDash();monthReport();document.getElementById("reportMonth")?.addEventListener("change",financeReport);document.getElementById("reportWeek")?.addEventListener("change",financeReport);initCustomers();customerProfile();initDevices();deviceProfile();initRequests();requestProfile();initParts();partProfile();initTasks();settingsPage();renderTreasury()})
 
 // Quick-create relations: create the missing entity without leaving the current workflow.
 function setupQuickLocation(prefix){
