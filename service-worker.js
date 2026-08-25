@@ -1,4 +1,4 @@
-const CACHE_NAME = "workshop-v11-9-0-reports-print-share";
+const CACHE_NAME = "workshop-v11-10-context-actions";
 importScripts("./notif-shared.js");
 const CORE_FILES = [
   "./",
