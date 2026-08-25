@@ -152,29 +152,35 @@ header{display:flex;align-items:center;justify-content:space-between;gap:12px}
 .simple-stock-alert:active{opacity:.8}
 .simple-order-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
 .simple-order-grid .simple-tile{min-height:86px}
-/* خط السير القادم — بطاقة داكنة مستقلة (rp- prefix خاص بيها لوحدها عشان متتعارضش مع route-summary/route-group-title بتوع صفحة route.html) */
-.rp-wrap{margin-top:14px;background:#17181b;color:#f2f3f5;border-radius:18px;padding:14px 16px 18px;box-shadow:0 6px 20px #0000003d}
-.rp-title{display:flex;align-items:center;justify-content:space-between;gap:10px;padding-bottom:12px;margin-bottom:10px;border-bottom:1px solid #2c2d31;font-size:16px}
+/* خط السير القادم — بطاقة مستقلة (rp- prefix خاص بيها لوحدها عشان متتعارضش مع route-summary/route-group-title بتوع صفحة route.html) */
+/* الألوان معمولة كمتغيرات CSS عشان تتغير من الإعدادات (داكن/فاتح/تلقائي حسب النظام/لون مخصص) من غير ما نلمس أي كلاس تاني */
+.rp-wrap{--rp-bg:#17181b;--rp-fg:#f2f3f5;--rp-muted:#9aa0a8;--rp-border:rgba(255,255,255,.12);--rp-link:#4d9fff;
+  margin-top:14px;background:var(--rp-bg);color:var(--rp-fg);border-radius:18px;padding:14px 16px 18px;box-shadow:0 6px 20px #0000003d}
+.rp-wrap.rp-theme-light{--rp-bg:#ffffff;--rp-fg:#18212b;--rp-muted:#687583;--rp-border:rgba(0,0,0,.1);--rp-link:#17324d;box-shadow:0 2px 12px #0000001a;border:1px solid #e5e8eb}
+@media(prefers-color-scheme:light){.rp-wrap.rp-theme-auto{--rp-bg:#ffffff;--rp-fg:#18212b;--rp-muted:#687583;--rp-border:rgba(0,0,0,.1);--rp-link:#17324d;box-shadow:0 2px 12px #0000001a;border:1px solid #e5e8eb}}
+.rp-title{display:flex;align-items:center;justify-content:space-between;gap:10px;padding-bottom:12px;margin-bottom:10px;border-bottom:1px solid var(--rp-border);font-size:16px}
 .rp-title b{font-weight:bold}
-.rp-title span{font-size:13px;color:#9aa0a8}
-.rp-empty{padding:16px;text-align:center;color:#9aa0a8;font-size:13px}
-.rp-day{border-top:1px solid #2c2d31;padding-top:10px;margin-top:10px}
+.rp-title span{font-size:13px;color:var(--rp-muted)}
+.rp-empty{padding:16px;text-align:center;color:var(--rp-muted);font-size:13px}
+.rp-day{border-top:1px solid var(--rp-border);padding-top:10px;margin-top:10px}
 .rp-day:first-of-type{border-top:0;padding-top:0;margin-top:0}
 .rp-day-title{display:flex;justify-content:space-between;align-items:baseline;gap:8px;font-size:15px}
 .rp-day-title b{font-weight:bold}
-.rp-day-title span{color:#9aa0a8;font-size:13px}
+.rp-day-title span{color:var(--rp-muted);font-size:13px}
 .rp-group{margin-top:10px}
-.rp-group-title{display:flex;flex-direction:row-reverse;justify-content:flex-end;align-items:center;gap:6px;font-size:14px;font-weight:bold;color:#e7e9ec;padding:2px 2px 6px}
-.rp-group-title span{color:#9aa0a8;font-weight:normal;margin-inline-start:auto}
+.rp-group-title{display:flex;flex-direction:row-reverse;justify-content:flex-end;align-items:center;gap:6px;font-size:14px;font-weight:bold;color:var(--rp-fg);padding:2px 2px 6px}
+.rp-group-title span{color:var(--rp-muted);font-weight:normal;margin-inline-start:auto}
 .rp-center{margin-top:8px}
-.rp-center>b{display:block;font-size:15px;font-weight:bold;color:#f2f3f5;padding:4px 0}
+.rp-center>b{display:block;font-size:15px;font-weight:bold;color:var(--rp-fg);padding:4px 0}
 .rp-village{margin-top:4px;padding:6px 0}
 .rp-village-head{display:flex;justify-content:space-between;align-items:center;gap:8px}
-.rp-village-head span{font-size:13px;color:#e7e9ec}
-.rp-village-head strong{font-size:13px;font-weight:normal;color:#9aa0a8}
-.rp-order-link{display:block;font-weight:bold;color:#4d9fff;text-decoration:none;font-size:13px;padding:4px 0 2px}
+.rp-village-head span{font-size:13px;color:var(--rp-fg)}
+.rp-village-head strong{font-size:13px;font-weight:normal;color:var(--rp-muted)}
+.rp-order-link{display:block;font-weight:bold;color:var(--rp-link);text-decoration:none;font-size:13px;padding:4px 0 2px}
 .rp-order-link:active{opacity:.7}
 @media(max-width:650px){.rp-wrap{padding:12px 14px 16px}}
+.route-theme-opt{opacity:.75}
+.route-theme-opt.active-opt{background:#17324d;color:#fff;border-color:#17324d;opacity:1}
 .simple-list-head{display:flex;align-items:center;justify-content:space-between;gap:8px;margin:12px 0 8px}
 .simple-list-head>div{display:grid;gap:2px}
 .simple-list-head small{font-size:11px;color:#687583}

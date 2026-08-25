@@ -444,8 +444,18 @@ function settingsPage(){
   partCategorySettings.innerHTML=s.partCats.map((b,i)=>`<div class="setting-row drag-item" draggable="true" data-drag-kind="partCats" data-drag-index="${i}"><span class="drag-handle" title="سحب للترتيب">☷</span><span class="setting-name"><b>${i+1}. ${esc(b)}</b></span><span class="compact-actions"><input class="order-number" type="number" min="1" max="${s.partCats.length}" value="${i+1}" title="رقم الترتيب" onchange="setListPosition('partCats',${i},this.value)"><button class="secondary mini-action" onclick="renamePartCategory('${esc(b)}')">✏️</button><button class="secondary mini-action" onclick="deletePartCategory('${esc(b)}')">🗑️</button></span></div>`).join("");
   let host=document.getElementById("settingsDynamic");
   if(host)host.innerHTML=[["orderStatuses","حالات أوامر الشغل","🛠️"],["priorities","الأولويات","⭐"],["executionPlaces","أماكن التنفيذ","📍"],["workshopStatuses","حالات الورشة","🏭"],["paymentStatuses","حالات الدفع","💳"],["units","وحدات القياس","📏"],["addressTypes","أنواع العناوين","🏠"],["orderTags","التصنيف اليدوي لأوامر الشغل","🏷️"],["expenseCategories","تصنيفات المصاريف","🧯"]].map(x=>listEditorHtml(...x)).join("");
+  let rtHost=document.getElementById("routeThemeSettings");
+  if(rtHost)rtHost.innerHTML=routeThemeSettingsHtml();
   bindSortableSettings();
 }
+function routeThemeSettingsHtml(){
+  let s=settings(),theme=s.routeTheme||"dark",color=s.routeThemeColor||"#17181b";
+  let opt=(val,label,emoji)=>`<button type="button" class="secondary mini-action route-theme-opt${theme===val?" active-opt":""}" onclick="setRouteTheme('${val}')">${emoji} ${label}</button>`;
+  return `<div class="compact-actions">${opt("auto","تلقائي (حسب النظام)","📱")}${opt("dark","داكن","🌙")}${opt("light","فاتح","☀️")}${opt("custom","لون مخصص","🎨")}</div>`
+    +(theme==="custom"?`<div class="inline" style="margin-top:8px;align-items:center"><input type="color" id="routeThemeColorInput" value="${color}" onchange="setRouteThemeColor(this.value)"><span class="hint">اختر أي لون تفضله للخلفية</span></div>`:"");
+}
+function setRouteTheme(v){let s=settings();s.routeTheme=v;put(K.s,s);settingsPage()}
+function setRouteThemeColor(v){let s=settings();s.routeTheme="custom";s.routeThemeColor=v;put(K.s,s);settingsPage()}
 function setTypePosition(i,pos){let n=parseInt(pos,10),entries=Object.entries(settings().types||{});if(!Number.isFinite(n))return settingsPage();n=Math.max(1,Math.min(entries.length,n));if(i<0||i>=entries.length||i===n-1)return;let item=entries.splice(i,1)[0];entries.splice(n-1,0,item);let s=settings();s.types=Object.fromEntries(entries);put(K.s,s);settingsPage()}
 function addCenter(){let el=document.getElementById("newCenter"),v=el&&el.value?el.value:prompt("اسم المركز الجديد");if(!v)return;v=v.trim();if(!v)return;let s=settings();if(!s.centers.includes(v)){s.centers.push(v);s.villages[v]=s.villages[v]||[]}put(K.s,s);if(el)el.value="";settingsPage()}
 function renameCenter(c){let n=prompt("الاسم الجديد للمركز",c);if(!n||n===c)return;n=n.trim();if(!n)return;let s=settings(),i=s.centers.indexOf(c);if(i<0)return;s.centers[i]=n;s.villages[n]=s.villages[c]||[];if(n!==c)delete s.villages[c];put(K.s,s);settingsPage()}
