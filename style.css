@@ -205,6 +205,9 @@ header{display:flex;align-items:center;justify-content:space-between;gap:12px}
 @media print{.tel-link,.wa-link{color:#111!important}}
 .backup-import-btn{display:inline-flex;align-items:center;cursor:pointer}
 .backup-import-btn input{display:none}
+.quick-order-toggle{width:100%;text-align:right;background:#17324d;color:#fff;border:0;border-radius:11px;padding:14px 16px;font-size:16px;font-weight:bold;cursor:pointer;font-family:inherit}
+.quick-order-toggle.quick-order-open{background:#245a7a;border-radius:11px 11px 0 0}
+#quickOrderBody{padding-top:12px}
 .request-parts .hint{margin-top:6px}
 
 /* ===== صفحة التقارير والتحليلات ===== */
