@@ -306,3 +306,16 @@ header{display:flex;align-items:center;justify-content:space-between;gap:12px}
   .route-completed-row .badge{font-size:11px}
   .route-completed-row span:nth-child(3){max-width:42vw}
 }
+/* خط السير: أزرار ترتيب واضحة بدون سحب */
+.route-up-btn{background:#e8f1ff!important;color:#1769aa!important;border:1px solid #9ec5e8!important}
+.route-down-btn{background:#fff0e8!important;color:#b34b16!important;border:1px solid #e7b28e!important}
+.route-contact-unavailable{background:#fff1f1!important;color:#b42318!important;border:1px solid #efb0aa!important}
+.route-contact-noanswer{background:#fff8df!important;color:#8a6500!important;border:1px solid #e4c76a!important}
+.route-badge-unavailable{background:#fde7e7!important;color:#b42318!important}
+.route-badge-noanswer{background:#fff1c7!important;color:#8a6500!important}
+.route-contact-time{font-size:10px;color:#6b7280;white-space:nowrap}
+@media(max-width:650px){
+  .route-completed-row{flex-wrap:wrap}
+  .route-contact-time{order:5;width:100%}
+  .route-completed-row .route-up-btn,.route-completed-row .route-down-btn{padding:5px 8px!important}
+}
