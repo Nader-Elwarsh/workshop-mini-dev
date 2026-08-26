@@ -1,4 +1,4 @@
-const CACHE_NAME = "workshop-v11-16-cleanup";
+const CACHE_NAME = "workshop-v11-20-refactor3";
 importScripts("./notif-shared.js");
 const CORE_FILES = [
   "./",
@@ -18,6 +18,7 @@ const CORE_FILES = [
   "./tasks.html",
   "./reports.html",
   "./style.css",
+  "./shared-data.js",
   "./app.js",
   "./workshop-mini-simple-ui.js",
   "./workshop-mini-enhancements.js",
