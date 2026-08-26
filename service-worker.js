@@ -1,4 +1,4 @@
-const CACHE_NAME = "workshop-v11-22-treasury-tasks-split";
+const CACHE_NAME = "workshop-v11-23-inventory-route";
 importScripts("./notif-shared.js");
 const CORE_FILES = [
   "./",
