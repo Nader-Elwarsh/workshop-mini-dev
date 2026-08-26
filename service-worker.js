@@ -1,4 +1,4 @@
-const CACHE_NAME = "workshop-v11-26-route-fusha-cleanup";
+const CACHE_NAME = "workshop-v11-27-bugfixes";
 importScripts("./notif-shared.js");
 const CORE_FILES = [
   "./",

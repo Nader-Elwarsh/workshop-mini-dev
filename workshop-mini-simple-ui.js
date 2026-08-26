@@ -651,6 +651,7 @@
     if (!confirm("تأكيد استلام كامل قيمة الأمر وإغلاقه نهائيًا؟ بعد التأكيد لن يمكن التعديل.")) return;
 
     const now = new Date().toISOString();
+    const collected = Math.max(0, (+r.total || 0) - (+r.deposit || 0));
     r.status = "مكتمل";
     r.paid = true;
     r.remain = 0;
@@ -660,6 +661,7 @@
     r.closedStatus = "مغلق";
 
     save("wf_r", a);
+    if (typeof syncTreasuryForOrderClose === "function") syncTreasuryForOrderClose(r, collected);
     location.reload();
   };
 
