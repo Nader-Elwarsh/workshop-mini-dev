@@ -4,6 +4,20 @@
 
 ---
 
+## v11-22 — 2026-08-26 — فصل app.js تدريجيًا: الخزنة والمهام في ملفات مستقلة
+
+⚠️ نفس ملحوظة v11-21: اتنفذ بمساعدة Claude وتحقق منطقي/`node --check` بس،
+من غير تشغيل فعلي في متصفح. لازم تتجرب يدويًا قبل النشر: فتح صفحة الخزنة
+(إضافة حركة وارد/صرف، حفظ رصيد افتتاحي)، وصفحة المهام (إضافة/تعديل/حذف
+مهمة)، وحفظ أمر شغل بعربون (بينادي `syncTreasuryForOrderDeposit`) للتأكد
+إن التنقّل بين الملفات مأثرش على السلوك.
+
+- 🏗️ **قسم الخزنة اتنقل بالكامل من `app.js` لملف `treasury.js` جديد** (13 دالة: `treasuryEntries`, `treasuryBalance`, `upsertTreasuryEntry`, `removeTreasuryEntry`, `syncTreasuryForOrderDeposit`, `syncTreasuryForOrderClose`, `syncTreasuryForExpense`, `addTreasuryManual`, `saveOpeningBalance`, `editTreasuryEntry`, `deleteTreasuryEntry`, `operationalTreasurySummary`, `renderTreasury`) — نفس الكود حرفيًا، نقل مكان بس.
+- 🏗️ **قسم المهام والمتابعة اتنقل بالكامل لملف `tasks.js` جديد** (`taskRows`, `taskDateTime`, `taskPriorityClass`, `saveTask`, `clearTaskForm`, `toggleTask`, `deleteTask`, `editTask`, `renderTasks`, `initTasks`, `fillTaskRequests`) — نفس الكود حرفيًا برضه.
+- 📉 **`app.js` نزل من 810 لـ 638 سطر** في الدفعتين v11-21 وv11-22 مع بعض (كانت أكبر قبل كده).
+- الصفحات الخمستاشر و`service-worker.js` اتحدثوا يحمّلوا `treasury.js` و`tasks.js` قبل `app.js` (اسم الـ cache اتغيّر تاني عشان الإصدار الجديد ينزل).
+- لم يتغيّر أي منطق أو سلوك ظاهر — نقل كود بس، مفيش أي تعديل في محتوى الدوال.
+
 ## v11-21 — 2026-08-26 — نسخة بيانات (schema version) + نقل الصور لـ IndexedDB + طبقة rollback + تنظيف ملفات ميتة (باقية من v11-18)
 
 ⚠️ **الدفعة دي اتنفذت بمساعدة Claude من غير تشغيل فعلي في متصفح حقيقي** (فحص
