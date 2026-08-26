@@ -1,4 +1,4 @@
-const CACHE_NAME = "workshop-v11-24-route-contact-inventory";
+const CACHE_NAME = "workshop-v11-25-route-layout";
 importScripts("./notif-shared.js");
 const CORE_FILES = [
   "./",
