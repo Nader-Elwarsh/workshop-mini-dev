@@ -51,6 +51,51 @@
   }
   function id() { return crypto.randomUUID ? crypto.randomUUID() : Date.now().toString(36) + Math.random().toString(36).slice(2); }
 
+  /* ---------------------------------------------------------------------
+     رقم إصدار شكل البيانات (schema version)، منفصل عن رقم إصدار التطبيق
+     (اللي هو حاليًا مجرد رقم في ملف الباك أب). ليه محتاجينه: أي تعديل
+     مستقبلي في شكل سجل مخزّن (زي نقل الصور لـ IndexedDB) لازم يتعرف إمتى
+     البيانات المحفوظة عند المستخدم "قديمة الشكل" عشان يشغّل خطوة ترحيل
+     مرة واحدة بس، بدل ما يخمّن أو يكرر الترحيل كل مرة.
+     wf_schema_version مش موجود خالص = بيانات قديمة من قبل ما النظام ده
+     يتضاف (نعتبرها إصدار 1 ضمنيًا).
+     --------------------------------------------------------------------- */
+  const SCHEMA_KEY = "wf_schema_version";
+  const CURRENT_SCHEMA_VERSION = 2;
+  function getSchemaVersion() {
+    let v = parseInt(localStorage.getItem(SCHEMA_KEY), 10);
+    return Number.isFinite(v) && v > 0 ? v : 1;
+  }
+  function setSchemaVersion(v) { localStorage.setItem(SCHEMA_KEY, String(v)); }
+
+  /* ---------------------------------------------------------------------
+     withRollback: طبقة "شبه Transaction" لعمليات بتلمس أكتر من مفتاح
+     localStorage مع بعض (زي تعديل مخزون القطع + حركاته وقت حفظ أمر شغل).
+     قبل كده كل عملية كانت بتعمل backup يدوي بـ JSON.stringify وترجعه لو
+     فشلت — نفس الفكرة بالظبط لكن معمّمة في مكان واحد بدل ما تتكرر.
+     بتاخد قايمة مفاتيح (من K.*) وفنكشن fn:
+       - لو fn رجّعت { ok:false, ... } → كل المفاتيح ترجع لحالتها الأصلية.
+       - لو fn رمت استثناء → نفس الشيء، وبعدين الاستثناء يتنقل زي ما هو.
+       - غير كده → التعديلات تتثبّت زي ما هي (مفيش أي إرجاع).
+     ملحوظة: ده مش transaction حقيقي (مفيش قفل/isolation)، لكنه بيمنع
+     نسيان إرجاع أحد المفاتيح المتأثرة لو الكود بعدين اتوسّع وبقى بيلمس
+     مفاتيح أكتر من واحد.
+     --------------------------------------------------------------------- */
+  function withRollback(keys, fn) {
+    let snapshot = {};
+    keys.forEach(k => { snapshot[k] = get(k, null); });
+    try {
+      let result = fn();
+      if (result && result.ok === false) {
+        keys.forEach(k => put(k, snapshot[k]));
+      }
+      return result;
+    } catch (e) {
+      keys.forEach(k => put(k, snapshot[k]));
+      throw e;
+    }
+  }
+
   function settings() {
     let s = get(K.s, null); if (!s) s = {};
     let base = JSON.parse(JSON.stringify(def));
@@ -127,7 +172,8 @@
 
   window.WorkshopData = {
     K, get, put, arr, esc, id, settings, duplicateCustomerByPhone,
-    customerName, deviceName, addresses, addressText, defineOverride, refreshAllScreens
+    customerName, deviceName, addresses, addressText, defineOverride, refreshAllScreens,
+    getSchemaVersion, setSchemaVersion, CURRENT_SCHEMA_VERSION, withRollback
   };
 
   // نفس الأسماء متاحة كمتغيرات عامة زي ما كانت بالظبط (K, get, put, arr, esc, id, settings, ...)
@@ -146,4 +192,8 @@
   window.addressText = addressText;
   window.defineOverride = defineOverride;
   window.refreshAllScreens = refreshAllScreens;
+  window.getSchemaVersion = getSchemaVersion;
+  window.setSchemaVersion = setSchemaVersion;
+  window.CURRENT_SCHEMA_VERSION = CURRENT_SCHEMA_VERSION;
+  window.withRollback = withRollback;
 })(window);
