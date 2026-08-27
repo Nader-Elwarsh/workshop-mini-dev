@@ -1,6 +1,6 @@
 (function(){
   const money=n=>(+n||0).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2})+' ج';
-  const dateKey=d=>{let x=new Date(d);return Number.isNaN(x.getTime())?'':`${x.getFullYear()}-${String(x.getMonth()+1).padStart(2,'0')}-${String(x.getDate()).padStart(2,'0')}`};
+  const dateKey=d=>window.dayKeyLocal?window.dayKeyLocal(d):'';
   const escR=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[c]));
   function range(){
     let from=document.getElementById('repFrom')?.value,to=document.getElementById('repTo')?.value;

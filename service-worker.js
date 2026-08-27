@@ -1,4 +1,4 @@
-const CACHE_NAME = "workshop-v11-29-fixes";
+const CACHE_NAME = "workshop-v11-30-fixes2";
 importScripts("./notif-shared.js");
 const CORE_FILES = [
   "./",

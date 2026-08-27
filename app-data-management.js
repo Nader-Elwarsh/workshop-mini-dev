@@ -37,6 +37,11 @@ async function restoreBackupFile(input){
       let backupSchema=data._meta?.schemaVersion||1;
       keys.forEach(k=>{if(k in data)put(k,data[k])});
       if("wf_notif_enabled" in data && data.wf_notif_enabled!=null)localStorage.setItem("wf_notif_enabled",data.wf_notif_enabled);
+      // الاسترجاع معناه استبدال كامل لكل بيانات النظام (زي ما موضّح في رسالة
+      // التأكيد فوق)، فلازم نمسح صور IndexedDB القديمة الأول قبل ما نستورد
+      // صور الملف — وإلا صور من قبل الاسترجاع (بمراجع مختلفة عن اللي في
+      // الملف) هتفضل موجودة يتيمة جنب صور النسخة المستوردة.
+      if(window.ImageStore?.clearAll)await window.ImageStore.clearAll();
       if(data.images && window.ImageStore)await window.ImageStore.importAll(data.images);
       if(window.setSchemaVersion)window.setSchemaVersion(Math.min(backupSchema,window.CURRENT_SCHEMA_VERSION||backupSchema));
       alert("✅ تم استرجاع النسخة الاحتياطية بنجاح. هيتم فتح الرئيسية الآن.");
