@@ -1,4 +1,4 @@
-const CACHE_NAME = "workshop-v11-27-bugfixes";
+const CACHE_NAME = "workshop-v11-28-app-split";
 importScripts("./notif-shared.js");
 const CORE_FILES = [
   "./",
@@ -23,7 +23,19 @@ const CORE_FILES = [
   "./migrations.js",
   "./treasury.js",
   "./tasks.js",
-  "./app.js",
+  "./app-shared.js",
+  "./app-dashboard-reports.js",
+  "./app-customers.js",
+  "./app-devices.js",
+  "./app-requests.js",
+  "./app-settings-lists.js",
+  "./app-parts.js",
+  "./app-settings.js",
+  "./app-delete-tools.js",
+  "./app-route-followup.js",
+  "./app-data-management.js",
+  "./app-quick-add.js",
+  "./app-notifications-bootstrap.js",
   "./workshop-mini-simple-ui.js",
   "./workshop-mini-enhancements.js",
   "./reports.js",
