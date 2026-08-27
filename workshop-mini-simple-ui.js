@@ -349,6 +349,8 @@
     renderParts();
   };
 
+  /* النسخة دي بتستبدل نسخة app-parts.js الأساسية على نفس الصفحات. أي تعديل
+     في بيانات القطعة المعروضة لازم يترجم للنسختين. */
   window.renderParts = function () {
     const el = $("partList");
     if (!el) return;
@@ -690,7 +692,12 @@
       }).join("") : `<div class="item">لا توجد أوامر في هذا القسم.</div>`}`;
   });
 
-  /* ---------- الإغلاق: الحالة تصبح مكتملة ويُسجل الإغلاق ---------- */
+  /* ---------- الإغلاق: الحالة تصبح مكتملة ويُسجل الإغلاق ----------
+     ملحوظة: النسخة دي بتستبدل نسخة app-requests.js الأساسية في الصفحات
+     اللي بتحمّل workshop-mini-simple-ui.js (customers/devices/inventory/
+     requests). النسختين لازم يفضلوا بنفس المنطق بالظبط — أي تعديل هنا
+     (شرط الإغلاق، الحقول اللي بتتسجل...) لازم يترجم لنفس التعديل في
+     markPaidAndClose بملف app-requests.js، والعكس. */
   window.markPaidAndClose = function (i) {
     const a = requestRows();
     const r = a.find(x => x.id === i);
@@ -709,7 +716,6 @@
     r.paidAt = now;
     r.closed = true;
     r.closedAt = now;
-    r.closedStatus = "مغلق";
 
     save("wf_r", a);
     if (typeof syncTreasuryForOrderClose === "function") syncTreasuryForOrderClose(r, collected);
