@@ -30,6 +30,19 @@ function persistRequestRecord(formData,existing){
       if(fromStatus!==formData.status&&!canTransitionStatus(fromStatus,formData.status)){
         return{ok:false,error:`لا يمكن الانتقال من حالة «${fromStatus}» إلى «${formData.status}» مباشرة.`}
       }
+      // إلغاء الأمر معناه إن الشغل ماتمش فعليًا، فقطعه المستخدمة لازم ترجع
+      // للمخزن (زي بالظبط ما بيحصل لو الأمر اتحذف نهائيًا). إعادة فتح أمر
+      // ملغي بترجع تخصم نفس القطع تاني لو لسه متاحة بنفس الكمية، وإلا
+      // يترفض إعادة الفتح برسالة واضحة بدل ما يفتح بمخزون غير متسق.
+      if(fromStatus!==formData.status){
+        if(formData.status==="ملغي"){
+          adjustStockForOrder(formData.parts,[],existing.id);
+        } else if(fromStatus==="ملغي"&&formData.status==="جديد"){
+          if(!adjustStockForOrder([],formData.parts,existing.id)){
+            return{ok:false,error:"تعذر إعادة فتح الأمر: قطع الغيار المستخدمة فيه لم تعد متاحة بنفس الكمية في المخزن."}
+          }
+        }
+      }
       Object.assign(existing,{customerId:formData.customerId,deviceId:formData.deviceId,addressKey:formData.addressKey,visit:formData.visit,status:formData.status,executionPlace:formData.executionPlace,workshopStatus:formData.workshopStatus,partsWaiting:formData.partsWaiting,tag:formData.tag,fault:formData.fault,work:formData.work,labor:formData.labor,parts:formData.parts,partsTotal:formData.partsTotal,partsCost,total:formData.total,deposit:formData.deposit,remain:Math.max(0,formData.total-formData.deposit)});
       applyStatusTimestamp(existing,existing.status);
       if(fromStatus!==existing.status){
@@ -119,6 +132,20 @@ function changeRequestStatus(i,status){
   }
   if(from==="ملغي"&&status==="جديد"&&!confirm("تأكيد إعادة فتح أمر الشغل الملغي؟")){renderRequests();requestProfile();return}
   if(from==="مكتمل"&&status==="جاري التنفيذ"&&!confirm("تأكيد إعادة فتح أمر الشغل المكتمل عند الحاجة؟")){renderRequests();requestProfile();return}
+  // إلغاء الأمر يرجّع قطعه المستخدمة للمخزن (الشغل ماتمش فعليًا)، وإعادة
+  // فتحه من إلغاء بترجع تخصمها تاني لو لسه متاحة بنفس الكمية.
+  let stockResult=withRollback([K.p,K.m],()=>{
+    if(status==="ملغي"){
+      adjustStockForOrder(r.parts||[],[],r.id);
+    }else if(from==="ملغي"&&status==="جديد"){
+      if(!adjustStockForOrder([],r.parts||[],r.id))return{ok:false};
+    }
+    return{ok:true};
+  });
+  if(!stockResult.ok){
+    alert("تعذر إعادة فتح الأمر: قطع الغيار المستخدمة فيه لم تعد متاحة بنفس الكمية في المخزن.");
+    renderRequests();requestProfile();return;
+  }
   r.status=status;
   applyStatusTimestamp(r,status);
   if(status==="ملغي"){r.cancelReason=reason;r.cancelledAt=new Date().toISOString()}

@@ -1,4 +1,4 @@
-const CACHE_NAME = "workshop-v11-28-app-split";
+const CACHE_NAME = "workshop-v11-29-fixes";
 importScripts("./notif-shared.js");
 const CORE_FILES = [
   "./",
@@ -71,7 +71,7 @@ self.addEventListener("fetch", event => {
 
   // HTML pages: cache by pathname, not by query string.
   // This makes customer.html?id=..., device.html?id=... and request.html?id=...
-  // open correctly while offline; app.js reads the ID from the URL.
+  // open correctly while offline; the app-*.js files read the ID from the URL.
   if (request.mode === "navigate") {
     event.respondWith(
       fetch(request)
