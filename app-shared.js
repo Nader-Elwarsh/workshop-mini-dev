@@ -22,6 +22,33 @@ const WORK_ORDER_TRANSITIONS={"جديد":["جاري التنفيذ","ملغي"],
 function canTransitionStatus(from,to){if(!from)return true;if(from===to)return true;return (WORK_ORDER_TRANSITIONS[from]||[]).includes(to)}
 function nextStatusOptions(status){let opts=[status,...(WORK_ORDER_TRANSITIONS[status]||[])];return [...new Set(opts)]}
 function recordStatusHistory(r,from,to,note){r.statusHistory=Array.isArray(r.statusHistory)?r.statusHistory:[];r.statusHistory.push({from:from||"",to,at:new Date().toISOString(),note:note||""})}
+
+/* =========================================================
+   مهلة "المرتجع" لأوامر الشغل المكتملة والمغلقة (settings().returnWindowDays)
+   =========================================================
+   أمر الشغل المكتمل وغير المغلق: يفضل ممكن إرجاعه في أي وقت (زي ما كان).
+   أمر الشغل المكتمل والمغلق (بعد "تم الدفع بالكامل وإغلاق الأمر"): بيبقى
+   ليه مهلة محددة بالأيام (افتراضيًا 7، قابلة للتعديل من الإعدادات) تُحسب
+   من تاريخ الإغلاق (closedAt). بعد انتهاء المهلة مفيش مرتجع خالص.
+   ========================================================= */
+function returnWindowDeadline(r){
+  if(!r||!r.closedAt)return null;
+  let days=+(settings().returnWindowDays);
+  if(!Number.isFinite(days)||days<=0)days=7;
+  return new Date(new Date(r.closedAt).getTime()+days*86400000);
+}
+function returnWindowDaysLeft(r){
+  let dl=returnWindowDeadline(r);
+  if(!dl)return null;
+  return Math.ceil((dl.getTime()-Date.now())/86400000);
+}
+function canReturnRequest(r){
+  if(!r)return false;
+  if(r.status!=="مكتمل")return false;
+  if(!r.closed)return true;
+  let dl=returnWindowDeadline(r);
+  return !!dl&&Date.now()<=dl.getTime();
+}
 function statusHistoryHtml(r){let h=Array.isArray(r.statusHistory)?r.statusHistory:[];if(!h.length)return"";return `<div class="status-history"><h3>🕓 سجل تغييرات الحالة</h3>${h.slice().reverse().map(x=>`<div class="status-history-row"><div class="status-history-line"><span>${x.from?`${esc(x.from)} ← `:""}<b>${esc(x.to)}</b></span><small>${new Date(x.at).toLocaleString("ar-EG")}</small></div>${x.note?`<div class="status-history-note">📝 ${esc(x.note)}</div>`:""}</div>`).join("")}</div>`}
 
 /* K, get, put, arr, esc, id, settings, duplicateCustomerByPhone: منقولة لملف

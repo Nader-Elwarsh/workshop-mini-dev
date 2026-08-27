@@ -580,7 +580,7 @@
           const statusText = isDone ? '✅ مكتمل' : (x.contactStatus === 'unavailable' ? '📵 غير متاح' : '📞 لم يرد');
           const statusClass = isDone ? 'route-badge-done' : (x.contactStatus === 'unavailable' ? 'route-badge-unavailable' : 'route-badge-noanswer');
           const retryBtn = contactCollapsed ? `<button type="button" class="route-retry-btn mini-action" onclick="event.stopPropagation();retryRouteContact('${x.id}')" title="إرجاع الطلب إلى الحالة النشطة لإعادة المحاولة">🔄 إعادة المحاولة</button>` : '';
-          const returnBtn = (isDone && !x.closed) ? `<button type="button" class="return-btn mini-action" onclick="event.stopPropagation();markRequestReturned('${x.id}')" title="إرجاع الأمر كمرتجع للتعديل">🔄 مرتجع</button>` : '';
+          const returnBtn = (isDone && canReturnRequest(x)) ? `<button type="button" class="return-btn mini-action" onclick="event.stopPropagation();markRequestReturned('${x.id}')" title="إرجاع الأمر كمرتجع للتعديل">🔄 مرتجع${x.closed ? ` (${Math.max(0,returnWindowDaysLeft(x))}ي)` : ''}</button>` : '';
           return `<div class="route-completed-row" data-route-id="${x.id}" onclick="location.href='request.html?id=${x.id}'" title="اضغط لفتح أمر الشغل"><b>👤 ${esc2(x._c.name||"بدون اسم")}</b><span class="badge ${statusClass}">${statusText}</span><span class="route-row-arrows">${retryBtn}${returnBtn}<button type="button" class="route-up-btn mini-action" onclick="event.stopPropagation();moveRouteItem('${x.id}',-1)" title="تحريك لأعلى">⬆️</button><button type="button" class="route-down-btn mini-action" onclick="event.stopPropagation();moveRouteItem('${x.id}',1)" title="تحريك لأسفل">⬇️</button></span></div>`;
         }
         const toggleBtn = (!x.closed && x.status !== "ملغي") ? `<button type="button" class="secondary mini-action" onclick="event.preventDefault();event.stopPropagation();toggleVisited('${x.id}')">${visitedToday ? "↩️ إلغاء تسجيل الزيارة" : "✅ تسجيل الزيارة"}</button>` : "";
@@ -682,7 +682,7 @@
           </div>
           <div class="simple-record-side">
             <span class="simple-status ${r.closed ? "closed" : ""}">${esc2(status)}</span>
-            ${!r.closed && r.status === "مكتمل" ? `<button type="button" class="secondary mini-action return-btn" onclick="markRequestReturned('${r.id}')">🔄 مرتجع</button>` : ""}
+            ${canReturnRequest(r) ? `<button type="button" class="secondary mini-action return-btn" onclick="markRequestReturned('${r.id}')">🔄 مرتجع${r.closed ? ` (${Math.max(0,returnWindowDaysLeft(r))}ي)` : ""}</button>` : ""}
             <b>${(+r.total||0).toFixed(2)} ج</b>
             ${(+r.deposit||0) > 0 ? `<small class="deposit-chip">💵 عربون ${(+r.deposit).toFixed(2)} ج</small>` : ""}
           </div>
