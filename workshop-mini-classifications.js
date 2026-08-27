@@ -9,7 +9,7 @@
   const save = (k,v) => localStorage.setItem(k, JSON.stringify(v));
   const esc = v => String(v ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[c]));
   const activeOrder = r => !['مكتمل', 'ملغي'].includes(String(r.status || '').trim());
-  const workshopDevice = d => ['تم السحب','استلام الورشة','تحت الإصلاح','جاهز للتسليم'].includes(String(d.workshopStatus || '').trim());
+  const workshopDevice = d => String(d.workshopStatus || '').trim() === 'تم السحب';
   const todayKey = d => { const x = new Date(d); if (isNaN(x)) return ''; return `${x.getFullYear()}-${String(x.getMonth()+1).padStart(2,'0')}-${String(x.getDate()).padStart(2,'0')}`; };
   const orderDateKey = r => todayKey(r.createdAt || r.date || r.visitDate || r.visit || '');
   const addressText = c => {

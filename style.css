@@ -330,3 +330,4 @@ header{display:flex;align-items:center;justify-content:space-between;gap:12px}
   .route-order-actions{gap:5px}
   .route-order-actions .mini-action{min-width:0;padding:7px 6px!important;font-size:10px!important}
 }
+.status-history{grid-column:1/-1;background:#f7f9fb;border-radius:10px;padding:9px;margin:9px 0}.status-history h3{margin:0 0 6px;font-size:14px}.status-history-row{display:flex;justify-content:space-between;gap:8px;background:#fff;border-radius:7px;padding:6px 8px;margin-bottom:5px;font-size:12px}.status-history-row small{color:#687583}

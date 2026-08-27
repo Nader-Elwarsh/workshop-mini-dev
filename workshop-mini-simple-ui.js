@@ -600,7 +600,7 @@
       if (sf) ok = ok && r.status === sf;
       if (wf === "workshop") ok = ok && r.executionPlace === "الورشة";
       if (wf === "pull") ok = ok && r.workshopStatus && r.workshopStatus !== "غير مطلوب" && r.workshopStatus !== "تم التسليم";
-      if (wf === "inside") ok = ok && ["تم السحب","استلام الورشة","تحت الإصلاح","جاهز للتسليم"].includes(r.workshopStatus);
+      if (wf === "inside") ok = ok && r.workshopStatus === "تم السحب";
       return ok;
     });
 
