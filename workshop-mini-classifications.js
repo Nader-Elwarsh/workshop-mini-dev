@@ -8,7 +8,7 @@
   const read = k => { try { return JSON.parse(localStorage.getItem(k) || '[]'); } catch { return []; } };
   const save = (k,v) => localStorage.setItem(k, JSON.stringify(v));
   const esc = v => String(v ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[c]));
-  const activeOrder = r => !['مكتمل','مغلق','ملغي','مؤرشف'].includes(String(r.status || '').trim());
+  const activeOrder = r => !['مكتمل', 'ملغي'].includes(String(r.status || '').trim());
   const workshopDevice = d => ['تم السحب','استلام الورشة','تحت الإصلاح','جاهز للتسليم'].includes(String(d.workshopStatus || '').trim());
   const todayKey = d => { const x = new Date(d); if (isNaN(x)) return ''; return `${x.getFullYear()}-${String(x.getMonth()+1).padStart(2,'0')}-${String(x.getDate()).padStart(2,'0')}`; };
   const orderDateKey = r => todayKey(r.createdAt || r.date || r.visitDate || r.visit || '');
@@ -93,7 +93,7 @@
     const render=r=>`<div class="mini-smart-item"><div class="mini-smart-item-top"><a href="request.html?id=${encodeURIComponent(r.id)}"><b>🛠️ ${esc(r.no||'أمر شغل')}</b></a><span class="badge">${esc(r.status||'—')}</span></div><div class="mini-smart-meta">👤 ${esc(customerName(r.customerId))} • 🔧 ${esc(deviceLabel(r.deviceId))}</div><div class="mini-smart-actions"><label style="display:flex;align-items:center;gap:6px;font-size:12px">التصنيف اليدوي <select data-mini-order="${esc(r.id)}"><option value="">غير مصنف</option><option value="الورشة" ${r.miniGroup==='الورشة'?'selected':''}>🏭 الورشة</option><option value="غروب" ${r.miniGroup==='غروب'?'selected':''}>🌙 غروب</option><option value="مطاي" ${r.miniGroup==='مطاي'?'selected':''}>📍 مطاي</option></select></label><a class="primary small-btn" href="request.html?id=${encodeURIComponent(r.id)}">فتح 360°</a></div></div>`;
     const dateToday=todayKey(new Date());
     return [
-      {key:'completed',ico:'✅',label:'أوامر مكتملة',count:()=>rs.filter(r=>['مكتمل','مغلق'].includes(String(r.status||''))).length,rows:q=>bySearch(rs.filter(r=>['مكتمل','مغلق'].includes(String(r.status||''))),q),render},
+      {key:'completed',ico:'✅',label:'أوامر مكتملة',count:()=>rs.filter(r=>['مكتمل'].includes(String(r.status||''))).length,rows:q=>bySearch(rs.filter(r=>['مكتمل'].includes(String(r.status||''))),q),render},
       {key:'workshop',ico:'🏭',label:'أوامر الورشة',count:()=>rs.filter(r=>r.miniGroup==='الورشة').length,rows:q=>bySearch(rs.filter(r=>r.miniGroup==='الورشة'),q),render},
       {key:'today',ico:'📅',label:'أوامر اليوم',count:()=>rs.filter(r=>orderDateKey(r)===dateToday).length,rows:q=>bySearch(rs.filter(r=>orderDateKey(r)===dateToday),q),render},
       {key:'ghorob',ico:'🌙',label:'أوامر غروب',count:()=>rs.filter(r=>r.miniGroup==='غروب').length,rows:q=>bySearch(rs.filter(r=>r.miniGroup==='غروب'),q),render},

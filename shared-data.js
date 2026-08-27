@@ -103,7 +103,7 @@
       if (Array.isArray(base[k])) s[k] = Array.isArray(s[k]) ? s[k] : base[k];
       else if (base[k] && typeof base[k] === "object") s[k] = s[k] && typeof s[k] === "object" ? s[k] : base[k];
     }
-    s.orderStatuses = s.orderStatuses || ["جديد", "تم التواصل", "مجدول", "جاري الفحص", "انتظار موافقة العميل", "تحت الإصلاح", "مكتمل", "ملغي"];
+    s.orderStatuses = s.orderStatuses || ["جديد", "جاري التنفيذ", "مكتمل", "ملغي"];
     s.priorities = s.priorities || ["عادية", "عاجلة", "أولوية عالية"];
     s.executionPlaces = s.executionPlaces || ["عند العميل", "الورشة"];
     s.workshopStatuses = s.workshopStatuses || ["غير مطلوب", "مطلوب السحب", "تم السحب", "استلام الورشة", "تحت الإصلاح", "جاهز للتسليم", "تم التسليم"];

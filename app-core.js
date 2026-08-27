@@ -32,11 +32,7 @@ const WORK_ORDER_TYPES=[
  "زيارة فحص فقط","زيارة ضمان","زيارة دورية","معاينة قبل الإصلاح"
 ];
 const PRIORITIES=["عاجلة جدًا","عاجلة","عادية","منخفضة"];
-const STATUSES=[
- "جديد","بانتظار الإسناد","تم الإسناد","في الطريق","جاري الفحص",
- "بانتظار موافقة العميل","بانتظار قطعة غيار","جاري الإصلاح",
- "مكتمل","مغلق","ملغي","مؤرشف"
-];
+const STATUSES=["جديد", "جاري التنفيذ", "مكتمل", "ملغي"];
 
 const DEFAULT_SETTINGS={
  workshopName:"الورشة الفنية لصيانة الأجهزة المنزلية والتكييف",
@@ -434,7 +430,7 @@ function customerClassification(cid){
  const ratings=list(KEYS.ratings).filter(x=>String(x.customerId||x.clientId||"")===String(cid)&&x.archived!==true);
  const complaints=list(KEYS.complaints).filter(x=>String(x.customerId||x.clientId||"")===String(cid)&&x.archived!==true);
  const loyalty=loyaltyPoints(cid);
- const closed=req.filter(r=>["مكتمل","مغلق"].includes(String(r.status||""))).length;
+ const closed=req.filter(r=>["مكتمل"].includes(String(r.status||""))).length;
  const cancelled=req.filter(r=>String(r.status||"")==="ملغي").length;
  const avgRating=ratings.length?ratings.reduce((s,r)=>s+Number(r.rating||0),0)/ratings.length:0;
  const totalInvoices=inv.reduce((s,i)=>s+invoiceTotal(i),0);
@@ -869,7 +865,7 @@ function deriveDeviceCondition(deviceId){
  const reqs=deviceWorkOrders(deviceId).filter(r=>String(r.status||"")!=="ملغي");
  if(d.archived)return "مؤرشف";
  if(!reqs.length)return "يعمل";
- const active=reqs.filter(r=>!['مغلق','مكتمل','ملغي','مؤرشف'].includes(String(r.status||"")));
+ const active=reqs.filter(r=>!['مكتمل', 'ملغي'].includes(String(r.status||"")));
  const rank={
   "جاري الإصلاح":100,
   "بانتظار قطعة غيار":90,
@@ -895,7 +891,7 @@ function deriveDeviceCondition(deviceId){
   return "له أمر شغل مفتوح";
  }
  const latest=reqs.slice().sort((a,b)=>String(b.updatedAt||b.createdAt||"").localeCompare(String(a.updatedAt||a.createdAt||"")))[0];
- if(latest && ["مغلق","مكتمل"].includes(String(latest.status||"")))return "تم الإصلاح";
+ if(latest && ["مكتمل"].includes(String(latest.status||"")))return "تم الإصلاح";
  return "يعمل";
 }
 function syncDeviceConditions(){
@@ -908,12 +904,12 @@ function syncDeviceConditions(){
   if(d.archived)condition="مؤرشف";
   else{
    const rs=grouped[String(idOf(d))]||[];
-   const active=rs.filter(r=>!['مغلق','مكتمل','ملغي','مؤرشف'].includes(String(r.status||"")));
+   const active=rs.filter(r=>!['مكتمل', 'ملغي'].includes(String(r.status||"")));
    if(active.length){
     active.sort((a,b)=>{const ra=rank[String(a.status||"")]||10,rb=rank[String(b.status||"")]||10;return ra!==rb?rb-ra:String(b.updatedAt||b.createdAt||"").localeCompare(String(a.updatedAt||a.createdAt||""));});
     const st=String(active[0].status||"");
     condition=st==="جاري الإصلاح"?"تحت الإصلاح":st==="بانتظار قطعة غيار"?"بانتظار قطعة غيار":st==="بانتظار موافقة العميل"?"بانتظار موافقة العميل":st==="جاري الفحص"?"تحت الفحص":st==="في الطريق"?"في الطريق":"له أمر شغل مفتوح";
-   }else if(rs.some(r=>["مغلق","مكتمل"].includes(String(r.status||""))))condition="تم الإصلاح";
+   }else if(rs.some(r=>["مكتمل"].includes(String(r.status||""))))condition="تم الإصلاح";
   }
   return Object.assign({},d,{condition,currentCondition:condition,conditionSource:"system",conditionUpdatedAt:now()});
  });
@@ -1110,7 +1106,7 @@ function requestClosureReadiness(r){
  assert(tested,"لا يمكن إغلاق أمر الشغل قبل اختبار الجهاز وتسجيل النتيجة.");
  return true;
 }
-function isWorkCompleted(r){return !!r&&["مكتمل","مغلق"].includes(String(r.status||""));}
+function isWorkCompleted(r){return !!r&&["مكتمل"].includes(String(r.status||""));}
 function costApproved(r){return !!r&&(r.costApproved===true||r.costApprovedAt);}
 function isFinalInvoice(i){return !i.status||["نهائية","نهائي","معتمدة","مؤكدة","مغلقة"].includes(String(i.status));}
 
@@ -1412,7 +1408,7 @@ function returnPurchase(purchaseOrderId,returnItems,reason,actor){
  a.unshift(ret);coreWrite(KEYS.purchaseReturns,a);audit("مرتجع شراء","طلبات الشراء",id,"إرجاع أصناف إلى المورد",actor);return ret;
 }
 function deleteRoute(id,actor){
- requirePermission("delete",actor);const x=find(KEYS.routes,id);assert(x,"المسار غير موجود.");assert(!["جاري التنفيذ","مكتمل"].includes(String(x.status||"")),"لا يمكن حذف مسار بدأ التنفيذ.");
+ requirePermission("delete",actor);const x=find(KEYS.routes,id);assert(x,"المسار غير موجود.");assert(!["جاري التنفيذ", "مكتمل"].includes(String(x.status||"")),"لا يمكن حذف مسار بدأ التنفيذ.");
  const visits=list(KEYS.visits);visits.forEach(v=>{if(String(v.routeId||"")===String(id)){delete v.routeId;delete v.routeOrder;v.updatedAt=now();}});coreWrite(KEYS.visits,visits);
  coreWrite(KEYS.routes,list(KEYS.routes).filter(v=>String(idOf(v))!==String(id)));audit("حذف","المسارات",id,"حذف مسار",actor);return true;
 }
@@ -1576,7 +1572,7 @@ function assignTechnician(data,actor){
  assert(data&&data.requestId&&exists(KEYS.requests,data.requestId),"أمر الشغل غير موجود.");
  assert(data.technicianId&&exists(KEYS.technicians,data.technicianId),"الفني غير موجود.");
  const req=findRequest(data.requestId);
- assert(!["مغلق","ملغي","مؤرشف"].includes(String(req.status||"")),"لا يمكن إسناد فني لأمر شغل مغلق أو ملغي أو مؤرشف.");
+ assert(!["ملغي"].includes(String(req.status||"")),"لا يمكن إسناد فني لأمر شغل مغلق أو ملغي أو مؤرشف.");
  const tech=findTechnician(data.technicianId);
  assert(technicianIsActive(tech),"لا يمكن إسناد أمر الشغل إلى فني غير فعال أو موقوف.");
  assert(String(requestCustomerId(req))&&String(requestDeviceId(req)),"أمر الشغل غير مكتمل العلاقة بالعميل والجهاز.");
@@ -1607,7 +1603,7 @@ function saveWarranty(data,actor){
  assert(data.servicesCovered!==undefined||data.coveredServices!==undefined||data.includedServices!==undefined,"الخدمات المشمولة في الضمان مطلوبة.");
  assert(data.partsCovered!==undefined||data.coveredParts!==undefined||data.includedParts!==undefined,"القطع المشمولة في الضمان مطلوبة.");
  const warrantyStatus=clean(data.status||"ساري",50);
- assert(["ساري","منتهي","معلق","ملغي","قيد المراجعة","مغلق"].includes(warrantyStatus),"حالة الضمان غير معتمدة.");
+ assert(["ملغي"].includes(warrantyStatus),"حالة الضمان غير معتمدة.");
  if(manual)requirePermission("warranty",actor);
  const a=list(KEYS.warranties),id=clean(data.id,80)||nextId("WAR-",KEYS.warranties,6);
  const item=Object.assign({},data,{id,updatedAt:now(),createdAt:data.createdAt||now()});
