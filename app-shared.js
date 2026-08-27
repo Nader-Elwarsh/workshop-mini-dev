@@ -21,8 +21,8 @@ const WORK_ORDER_STATUSES=["جديد","جاري التنفيذ","مكتمل","م
 const WORK_ORDER_TRANSITIONS={"جديد":["جاري التنفيذ","ملغي"],"جاري التنفيذ":["مكتمل","ملغي"],"مكتمل":["جاري التنفيذ"],"ملغي":["جديد"]};
 function canTransitionStatus(from,to){if(!from)return true;if(from===to)return true;return (WORK_ORDER_TRANSITIONS[from]||[]).includes(to)}
 function nextStatusOptions(status){let opts=[status,...(WORK_ORDER_TRANSITIONS[status]||[])];return [...new Set(opts)]}
-function recordStatusHistory(r,from,to){r.statusHistory=Array.isArray(r.statusHistory)?r.statusHistory:[];r.statusHistory.push({from:from||"",to,at:new Date().toISOString()})}
-function statusHistoryHtml(r){let h=Array.isArray(r.statusHistory)?r.statusHistory:[];if(!h.length)return"";return `<div class="status-history"><h3>🕓 سجل تغييرات الحالة</h3>${h.slice().reverse().map(x=>`<div class="status-history-row"><span>${x.from?`${esc(x.from)} ← `:""}<b>${esc(x.to)}</b></span><small>${new Date(x.at).toLocaleString("ar-EG")}</small></div>`).join("")}</div>`}
+function recordStatusHistory(r,from,to,note){r.statusHistory=Array.isArray(r.statusHistory)?r.statusHistory:[];r.statusHistory.push({from:from||"",to,at:new Date().toISOString(),note:note||""})}
+function statusHistoryHtml(r){let h=Array.isArray(r.statusHistory)?r.statusHistory:[];if(!h.length)return"";return `<div class="status-history"><h3>🕓 سجل تغييرات الحالة</h3>${h.slice().reverse().map(x=>`<div class="status-history-row"><div class="status-history-line"><span>${x.from?`${esc(x.from)} ← `:""}<b>${esc(x.to)}</b></span><small>${new Date(x.at).toLocaleString("ar-EG")}</small></div>${x.note?`<div class="status-history-note">📝 ${esc(x.note)}</div>`:""}</div>`).join("")}</div>`}
 
 /* K, get, put, arr, esc, id, settings, duplicateCustomerByPhone: منقولة لملف
    shared-data.js (لازم يتحمّل قبل app.js في كل صفحة) عشان تبقى نسخة واحدة

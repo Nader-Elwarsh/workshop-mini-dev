@@ -179,6 +179,7 @@ header{display:flex;align-items:center;justify-content:space-between;gap:12px}
 .rp-order-link{display:block;font-weight:bold;color:var(--rp-link);text-decoration:none;font-size:13px;padding:4px 0 2px}
 .rp-order-link:active{opacity:.7}
 @media(max-width:650px){.rp-wrap{padding:12px 14px 16px}}
+.today-route-widget{margin-top:14px}
 .route-theme-opt{opacity:.75}
 .route-theme-opt.active-opt{background:#17324d;color:#fff;border-color:#17324d;opacity:1}
 .simple-list-head{display:flex;align-items:center;justify-content:space-between;gap:8px;margin:12px 0 8px}
@@ -315,6 +316,7 @@ header{display:flex;align-items:center;justify-content:space-between;gap:12px}
 .route-badge-noanswer{background:#fff1c7!important;color:#8a6500!important}
 .route-contact-time{font-size:10px;color:#6b7280;white-space:nowrap}
 .route-retry-btn{background:#eaf7ee!important;color:#18794e!important;border:1px solid #a9dbb9!important;white-space:nowrap}
+.return-btn{background:#fff1e0!important;color:#a15c00!important;border:1px solid #f0c88a!important;white-space:nowrap}
 @media(max-width:650px){
   .route-completed-row{grid-template-columns:minmax(0,1fr) auto auto;gap:5px;padding:8px 7px;font-size:13px}
   .route-completed-row .badge{font-size:10px;padding:3px 6px}
@@ -330,4 +332,4 @@ header{display:flex;align-items:center;justify-content:space-between;gap:12px}
   .route-order-actions{gap:5px}
   .route-order-actions .mini-action{min-width:0;padding:7px 6px!important;font-size:10px!important}
 }
-.status-history{grid-column:1/-1;background:#f7f9fb;border-radius:10px;padding:9px;margin:9px 0}.status-history h3{margin:0 0 6px;font-size:14px}.status-history-row{display:flex;justify-content:space-between;gap:8px;background:#fff;border-radius:7px;padding:6px 8px;margin-bottom:5px;font-size:12px}.status-history-row small{color:#687583}
+.status-history{grid-column:1/-1;background:#f7f9fb;border-radius:10px;padding:9px;margin:9px 0}.status-history h3{margin:0 0 6px;font-size:14px}.status-history-row{background:#fff;border-radius:7px;padding:6px 8px;margin-bottom:5px;font-size:12px}.status-history-line{display:flex;justify-content:space-between;gap:8px}.status-history-row small{color:#687583}.status-history-note{margin-top:4px;padding-top:4px;border-top:1px dashed #e2e6eb;color:#42505c;font-size:11px;overflow-wrap:anywhere}

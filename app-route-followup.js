@@ -1,17 +1,24 @@
 /* app-route-followup.js — خط السير اليومي ومتابعة العملاء. */
-function toggleVisited(i){let a=arr(K.r),r=a.find(x=>x.id===i);if(!r)return;let today=dayKeyLocal(new Date());if(r.visitedAt&&dayKeyLocal(r.visitedAt)===today)r.visitedAt=null;else r.visitedAt=new Date().toISOString();put(K.r,a);renderRoute()}
+// يحدّث أي عرض لخط السير موجود فعليًا في الصفحة الحالية: صفحة خط السير
+// المستقلة (route.html) و/أو ودجت "خط سير اليوم" داخل صفحة الأوامر —
+// كل دالة بترجع بهدوء لو مافيش عنصرها في الصفحة.
+function refreshRouteViews(){
+  if(typeof renderRoute==="function")renderRoute();
+  if(typeof renderRequests==="function")renderRequests();
+}
+function toggleVisited(i){let a=arr(K.r),r=a.find(x=>x.id===i);if(!r)return;let today=dayKeyLocal(new Date());if(r.visitedAt&&dayKeyLocal(r.visitedAt)===today)r.visitedAt=null;else r.visitedAt=new Date().toISOString();put(K.r,a);refreshRouteViews()}
 function setRouteContactStatus(i,status){
   const a=arr(K.r),r=a.find(x=>x.id===i);if(!r)return;
   r.contactStatus=status;
   r.contactStatusAt=new Date().toISOString();
   put(K.r,a);
-  renderRoute();
+  refreshRouteViews();
 }
 function clearRouteContactStatus(i){
   const a=arr(K.r),r=a.find(x=>x.id===i);if(!r)return;
   delete r.contactStatus;delete r.contactStatusAt;
   put(K.r,a);
-  renderRoute();
+  refreshRouteViews();
 }
 function retryRouteContact(i){clearRouteContactStatus(i);}
 function routeOrderForList(list){
@@ -27,10 +34,13 @@ function saveRouteOrder(ids){
   put(K.s,s);
 }
 function moveRouteItem(id,delta){
-  const el=document.getElementById("routeList");if(!el)return;
-  const ids=[...el.querySelectorAll("[data-route-id]")].map(x=>x.dataset.routeId);
+  // بيدور على بطاقات خط السير في أي مكان في الصفحة الحالية (routeList في
+  // route.html، أو ودجت خط سير اليوم في صفحة الأوامر) بدل ما يتقيّد بعنصر
+  // واحد بعينه بالـ id.
+  const nodes=[...document.querySelectorAll("[data-route-id]")];if(!nodes.length)return;
+  const ids=nodes.map(x=>x.dataset.routeId);
   const i=ids.indexOf(id),j=i+delta;if(i<0||j<0||j>=ids.length)return;
-  [ids[i],ids[j]]=[ids[j],ids[i]];saveRouteOrder(ids);renderRoute();
+  [ids[i],ids[j]]=[ids[j],ids[i]];saveRouteOrder(ids);refreshRouteViews();
 }
 function renderRoute(){
   let el=document.getElementById("routeList");if(!el)return;
